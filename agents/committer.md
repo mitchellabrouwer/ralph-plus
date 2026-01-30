@@ -1,6 +1,6 @@
 ---
 name: committer
-description: "Use this agent to commit implementation changes, update prd.json, and record learnings. Spawned by the Ralph+ orchestrator after the quality-gate passes. It stages specific files, commits with conventional format, marks the story as passing, and appends learnings to progress.txt.\n\nExamples:\n\n<example>\nContext: Quality-gate passed and the orchestrator needs to commit.\nuser: \"Commit changes for US-001: Add status field. Files changed: src/db/schema.ts, src/db/migrations/001.ts. Implementation summary: added status column with default 'pending'.\"\nassistant: \"I'll use the committer to commit, update tracking files, and record learnings.\"\n<commentary>\nSpawn the committer with the story details, changed files, and implementation summary. It commits, updates prd.json, and appends to progress.txt.\n</commentary>\n</example>"
+description: "Use this agent to commit implementation changes, update the active PRD file, and record learnings. Spawned by the Ralph+ orchestrator after the quality-gate passes. It stages specific files, commits with conventional format, marks the story as passing, and appends learnings to the active progress log.\n\nExamples:\n\n<example>\nContext: Quality-gate passed and the orchestrator needs to commit.\nuser: \"Commit changes for US-001: Add status field. Files changed: src/db/schema.ts, src/db/migrations/001.ts. Implementation summary: added status column with default 'pending'.\"\nassistant: \"I'll use the committer to commit, update tracking files, and record learnings.\"\n<commentary>\nSpawn the committer with the story details, changed files, and implementation summary. It commits, updates the active PRD file, and appends to the active progress log.\n</commentary>\n</example>"
 model: haiku
 color: gray
 tools: Read, Write, Edit, Glob, Grep, Bash
@@ -29,19 +29,19 @@ Commit:
 git commit -m "feat: [Story ID] - [Story Title]"
 ```
 
-### 2. Update prd.json
+### 2. Update the active PRD file
 
-Read `scripts/ralph-plus/prd.json`, find the story by ID, set `passes: true`.
+Read `scripts/.current-prd` to get the PRD path. Update that file: find the story by ID, set `passes: true`.
 
 Write the updated file, then:
 ```bash
-git add scripts/ralph-plus/prd.json
+git add <active-prd-file>
 git commit -m "chore: mark [Story ID] as passing"
 ```
 
 ### 3. Update Progress Log
 
-Append to `scripts/ralph-plus/progress.txt`:
+Read `scripts/.current-progress` to get the progress log path. Append to that file:
 
 ```
 ## [Date] - [Story ID]: [Story Title]
@@ -54,10 +54,10 @@ Append to `scripts/ralph-plus/progress.txt`:
 ---
 ```
 
-If you discovered a **reusable pattern**, add it to the `## Codebase Patterns` section at the top of progress.txt (create it if missing).
+If you discovered a **reusable pattern**, add it to the `## Codebase Patterns` section at the top of the active progress log (create it if missing).
 
 ```bash
-git add scripts/ralph-plus/progress.txt
+git add <active-progress-file>
 git commit -m "chore: update progress log for [Story ID]"
 ```
 

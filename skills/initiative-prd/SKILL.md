@@ -1,11 +1,11 @@
 ---
-name: prd-plus
-description: "Generate enhanced PRDs with risk levels, test requirements, and structured clarifying questions. Use when planning a feature for the Ralph+ pipeline. Triggers on: create a prd, write prd for, plan this feature, requirements for, spec out."
+name: initiative-prd
+description: "Create an initiative PRD JSON with risk, test requirements, and clarifying questions. Use when planning a new epic or feature and you need docs/initiatives/prd-<initiative>.json."
 ---
 
-# PRD+ Generator
+# Initiative PRD Generator
 
-Create detailed Product Requirements Documents enhanced for the Ralph+ multi-agent pipeline, with risk levels, test requirements, and structured clarifying questions.
+Create a PRD directly in the Ralph+ `prd-<initiative>.json` format, with risk levels, test requirements, and structured clarifying questions.
 
 ---
 
@@ -15,9 +15,9 @@ Create detailed Product Requirements Documents enhanced for the Ralph+ multi-age
 2. Use AskUserQuestion for structured clarifying questions
 3. Use Context7 MCP to look up relevant library/framework documentation
 4. Generate a structured PRD with risk levels and test requirements
-5. Save to `tasks/prd-[feature-name].md`
+5. Write `docs/initiatives/prd-<initiative>.json`
 
-**Important:** Do NOT start implementing. Just create the PRD.
+**Important:** Do NOT start implementing. Just create `prd-<initiative>.json`.
 
 ---
 
@@ -54,7 +54,7 @@ Use Context7 MCP to look up relevant documentation for the project's tech stack.
 
 ## Step 3: PRD Structure
 
-Generate the PRD with these sections:
+Use these sections to shape the content, but output only JSON. Map goals and requirements into the PRD `description` and story acceptance criteria. Architecture notes belong in `docs/architecture.md`.
 
 ### 1. Introduction/Overview
 Brief description of the feature and the problem it solves.
@@ -84,7 +84,6 @@ Each story needs:
 - [ ] Typecheck passes
 - [ ] Unit tests pass
 - [ ] Integration tests pass
-- [ ] **[UI stories only]** Verify in browser
 - [ ] **[High-risk only]** E2E tests pass
 ```
 
@@ -141,9 +140,49 @@ The PRD reader will be an AI agent in the Ralph+ pipeline. Therefore:
 
 ## Output
 
-- **Format:** Markdown (`.md`)
-- **Location:** `tasks/`
-- **Filename:** `prd-[feature-name].md` (kebab-case)
+- **Format:** JSON (`.json`)
+- **Location:** `docs/initiatives/`
+- **Filename:** `prd-<initiative>.json`
+
+## Output Format
+
+```json
+{
+  "project": "[Project Name]",
+  "branchName": "ralph/[feature-name-kebab-case]",
+  "description": "[Feature description from PRD title or intro]",
+  "qualityGates": {
+    "typescript": true,
+    "linting": true,
+    "formatting": true,
+    "unitTests": true,
+    "integrationTests": true
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "[Story title]",
+      "description": "As a [user], I want [feature] so that [benefit]",
+      "acceptanceCriteria": [
+        "Criterion 1",
+        "Criterion 2",
+        "Typecheck passes",
+        "Unit tests pass",
+        "Integration tests pass"
+      ],
+      "priority": 1,
+      "risk": "low",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
+```
 
 ---
 
@@ -158,8 +197,8 @@ Before saving the PRD:
 - [ ] Every story has test requirements specified
 - [ ] High-risk stories include E2E test requirements
 - [ ] Acceptance criteria include quality gates (typecheck, tests)
-- [ ] UI stories include browser verification criterion
+- [ ] UI stories do not add browser verification criteria unless explicitly requested
 - [ ] Functional requirements are numbered and unambiguous
 - [ ] Non-goals section defines clear boundaries
 - [ ] Quality gates section specifies which checks apply
-- [ ] Saved to `tasks/prd-[feature-name].md`
+- [ ] Saved to `docs/initiatives/prd-<initiative>.json`

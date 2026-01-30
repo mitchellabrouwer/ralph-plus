@@ -33,7 +33,7 @@ chore: update progress log for US-001
 
 Format: `ralph/[feature-name-kebab-case]`
 
-Derived from the `branchName` field in `prd.json`. Always branch from `main`.
+Derived from the `branchName` field in the active PRD file. Always branch from `main`.
 
 ```bash
 git checkout main
@@ -69,7 +69,7 @@ Use `git status` to see what changed, then stage only the relevant files.
 
 - `.env` and `.env.*` files
 - Credential files (`credentials.json`, `*.key`, `*.pem`)
-- `scripts/ralph-plus/tmp/` directory contents
+- `scripts/tmp/` directory contents
 - `node_modules/`
 - Build artifacts (`dist/`, `.next/`, `build/`)
 - OS files (`.DS_Store`, `Thumbs.db`)
@@ -117,7 +117,7 @@ Keep commits focused:
    feat: US-001 - Add status field to tasks table
    ```
 
-2. **Tracking commit:** prd.json and progress.txt updates
+2. **Tracking commit:** active PRD file and progress log updates
    ```
    chore: mark US-001 as passing
    ```

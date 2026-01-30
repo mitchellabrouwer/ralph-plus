@@ -22,7 +22,8 @@ Think of Ralph+ like a golf team.
 
 | 🏌️ Player | Role | 🧠 Model (Brain) | 🏑 Clubs (MCPs) | 📋 Training (Skills) |
 |-----------|------|------------------|-----------------|---------------------|
-| strategist | Reads the course, plans the round | opus | codex, gemini, context7 | prd-plus, ralph-plus |
+| architect | Sets project architecture and quality gates | opus | codex, gemini, context7 | project-init, architecture |
+| strategist | Reads the course, plans the round | opus | codex, gemini, context7 | initiative-prd |
 | planner | Plans each shot | opus | codex, gemini, context7 | - |
 | tdd | Executes the shots | opus | codex, context7 | test-driven-development |
 | e2e | Checks the ball landed where expected | sonnet | playwright, context7 | - |
@@ -37,9 +38,9 @@ You handle strategy. The agents handle everything else.
  YOU                          AGENTS (autonomous)
   │                               │
   │  1. Describe feature          │
-  │  2. Answer questions ◄────►  strategist (researches, asks, produces prd.json)
-  │  3. Review prd.json           │
-  │  4. Run ralph.sh              │
+  │  2. Answer questions ◄────►  strategist (researches, asks, produces prd-<initiative>.json)
+  │  3. Review prd-<initiative>.json    │
+  │  4. Run run-initiative-loop.sh              │
   │                               │
   │                          per story:
   │                               ├── planner       (technical plan)
@@ -55,6 +56,14 @@ You handle strategy. The agents handle everything else.
 
 ## Usage
 
+### Step 0: Project Init (optional)
+
+Use the architect agent once per project, or any time you need to (re)establish quality gates.
+
+```
+Use the architect agent to initialize this project
+```
+
 ### Step 1: Strategy (interactive)
 
 Open Claude Code in your project and invoke the strategist:
@@ -68,23 +77,34 @@ The strategist will:
 - Look up relevant library docs via Context7, Codex, and Gemini
 - Ask you 3-5 clarifying questions about scope, priority, and risk
 - Decompose the feature into small, dependency-ordered user stories
-- Write `scripts/ralph-plus/prd.json`
+- Write `docs/initiatives/prd-<initiative>.json`
 
 This is where you focus your energy. The better the stories and acceptance criteria, the better the autonomous execution.
 
-### Step 2: Review prd.json (optional)
+An initiative can be an epic or a single feature. Use the depth that fits your app.
+
+### Step 2: Review prd-<initiative>.json (optional)
 
 Check that stories are small enough (one context window each), ordered by dependency, and have clear acceptance criteria. Edit directly if needed.
+
+### Step 2.5: View PRDs in a TUI
+
+```bash
+./scripts/initiative-browser.sh --list
+./scripts/initiative-browser.sh prd-<initiative>.json
+```
+
+The viewer uses `less` for vim style navigation and `jq` for color.
 
 ### Step 3: Run the loop
 
 ```bash
-./scripts/ralph-plus/ralph.sh [max_iterations]
+./scripts/run-initiative-loop.sh --prd prd-<initiative>.json [max_iterations]
 ```
 
 Default is 10 iterations. Each iteration implements one story. The script:
 
-1. Reads `prd.json`, picks the highest priority story where `passes: false`
+1. Reads the selected `prd-<initiative>.json`, picks the highest priority story where `passes: false`
 2. Runs the 5-agent pipeline for that story
 3. If all stories pass, exits with success
 4. Otherwise, starts the next iteration for the next story
@@ -92,7 +112,7 @@ Default is 10 iterations. Each iteration implements one story. The script:
 
 ### Step 4: Check results
 
-Stories that passed have `passes: true` in `prd.json`. Failed stories have details in their `notes` field. Learnings from each story are appended to `progress.txt`.
+Stories that passed have `passes: true` in `prd-<initiative>.json`. Failed stories have details in their `notes` field. Learnings from each story are appended to `progress-<initiative>.txt` in `docs/initiatives/`.
 
 ## Pipeline
 
@@ -110,14 +130,14 @@ When quality-gate or e2e fails, the orchestrator retries with increasing scope:
 FAIL
  ├── Retry 1: re-run tdd with failure context, then re-verify
  ├── Retry 2: re-run planner + tdd (new approach), then re-verify
- └── Retry 3: mark story failed in prd.json notes, move to next story
+ └── Retry 3: mark story failed in prd-<initiative>.json notes, move to next story
 ```
 
 Each retry passes the specific failure details (error output, what check failed) so the agent can make targeted fixes rather than guessing.
 
 ## Setup
 
-1. Copy `scripts/ralph-plus/` into your project
+1. Copy `scripts/` into your project
 2. Copy agents from `agents/` into your project's `.claude/agents/`
 3. Copy skills from `skills/` into your project's `.claude/skills/`
 4. Configure MCPs in your project's `.mcp.json`:
@@ -133,9 +153,17 @@ Each retry passes the specific failure details (error output, what check failed)
 
 | Location | Purpose |
 |----------|---------|
-| `agents/` | 🏌️ Player definitions (strategist, planner, tdd, e2e, quality-gate, committer) |
-| `skills/` | 📋 Training modules (prd-plus, ralph-plus, test-driven-development, git-commit) |
-| `scripts/ralph-plus/ralph.sh` | Bash loop that runs one story per iteration |
-| `scripts/ralph-plus/CLAUDE.md` | Orchestrator prompt (coordinates the agents) |
-| `scripts/ralph-plus/prd.json` | Stories with pass/fail status (created by strategist) |
-| `scripts/ralph-plus/progress.txt` | Append-only learnings log (created at runtime) |
+| `agents/` | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
+| `skills/` | 📋 Training modules (initiative-prd, project-init, architecture, test-driven-development, git-commit) |
+| `scripts/run-initiative-loop.sh` | Bash loop that runs one story per iteration |
+| `scripts/CLAUDE.md` | Orchestrator prompt (coordinates the agents) |
+| `docs/initiatives/` | PRDs and progress logs per initiative |
+| `docs/initiatives/prd-<initiative>.json` | Stories with pass/fail status (created by strategist) |
+| `docs/initiatives/progress-<initiative>.txt` | Append-only learnings log (created at runtime) |
+| `docs/architecture.md` | Short architecture notes shared across initiatives |
+| `scripts/initiative-browser.sh` | TUI style PRD viewer |
+| `docs/reference/ralph/` | Legacy Ralph reference (original single agent flow) |
+
+## Credits
+
+Based on the original Ralph project: https://github.com/snarktank/ralph
