@@ -135,33 +135,48 @@ Each retry passes the specific failure details (error output, what check failed)
 
 ## Setup
 
-### 1. Agents
+### This repo (development)
 
-Copy each `.md` file from `agents/` into your project's `.claude/agents/`:
+In ralph-plus itself, `.claude/agents/` and `.claude/skills/` are symlinked to `agents/` and `skills/` so edits propagate automatically:
 
 ```bash
-mkdir -p .claude/agents
+# Already set up - symlinks point like this:
+.claude/agents/strategist.md -> ../../agents/strategist.md
+.claude/skills/architecture   -> ../../skills/architecture/
+```
+
+### Other projects
+
+Copy agents, skills, and scripts into your project:
+
+```bash
+mkdir -p .claude/agents .claude/skills
 cp path/to/ralph-plus/agents/*.md .claude/agents/
-```
-
-### 2. Skills
-
-Copy each skill directory from `skills/` into your project's `.claude/skills/`:
-
-```bash
-mkdir -p .claude/skills
 cp -r path/to/ralph-plus/skills/* .claude/skills/
-```
-
-### 3. Scripts
-
-Copy `scripts/` into your project root:
-
-```bash
 cp -r path/to/ralph-plus/scripts .
 ```
 
-### 4. MCPs
+### Third-party skills (npx skills add)
+
+[`npx skills add`](https://github.com/vercel-labs/agent-skills) installs community skills into `.agents/`. These are separate from the custom `agents/` and `skills/` directories in this repo.
+
+```bash
+# Install a skill from GitHub
+npx skills add vercel-labs/agent-skills
+
+# Install specific skills
+npx skills add vercel-labs/agent-skills --skill frontend-design
+
+# Install from a local path
+npx skills add ./my-local-skills
+
+# List available skills in a repo
+npx skills add vercel-labs/agent-skills --list
+```
+
+Installed skills land in `.agents/skills/` and are symlinked into `.claude/skills/` automatically. See the [npx skills docs](https://github.com/vercel-labs/agent-skills) for all options (`--global`, `--agent`, `--skill`, `--all`, etc).
+
+### MCPs
 
 Configure the MCP servers your agents need in your project's `.mcp.json`. See `.mcp.json` in this repo for a working example.
 
@@ -177,7 +192,10 @@ Configure the MCP servers your agents need in your project's `.mcp.json`. See `.
 | Location | Purpose |
 |----------|---------|
 | `agents/` | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
-| `skills/` | 📋 Training modules (tasks, project-init, architecture, test-driven-development, git-commit) |
+| `skills/` | 📋 Custom training modules (tasks, project-init, architecture, git-commit) |
+| `.agents/` | 📦 Third-party skills installed via `npx skills add` |
+| `.claude/agents/` | Symlinks to `agents/` (consumed by Claude Code) |
+| `.claude/skills/` | Symlinks to `skills/` and `.agents/skills/` (consumed by Claude Code) |
 | `scripts/run-task-loop.sh` | Bash loop that runs one story per iteration |
 | `scripts/CLAUDE.md` | Orchestrator prompt (coordinates the agents) |
 | `docs/tasks/` | Task files and progress logs |
