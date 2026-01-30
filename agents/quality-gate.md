@@ -17,30 +17,14 @@ You are the Quality Gate in the Ralph+ pipeline. Your job is to run static quali
 
 ## Checks (in order)
 
-Run only the checks specified in the quality gates config:
+Run only the checks specified in the quality gates config. Read `docs/architecture.md` to find the exact commands in the Quality Gates table. Run them in this order:
 
-### TypeScript Compilation
-```bash
-npx tsc --noEmit
-```
+1. **Typecheck** (compilation before anything else)
+2. **Lint**
+3. **Format**
+4. **Tests**
 
-### Linting
-```bash
-npx eslint .
-```
-If not configured, try `npm run lint`. If neither exists, skip.
-
-### Formatting
-```bash
-npx prettier --check .
-```
-If not configured, try `npm run format:check`. If neither exists, skip.
-
-### Tests
-```bash
-npm test -- --run
-```
-Or the project's test command. This runs unit and integration tests.
+If `docs/architecture.md` does not exist or has no Quality Gates table, discover the commands from the project's config files (package.json scripts, Makefile, pyproject.toml, etc.). If a gate is marked "n/a" or no command can be found, skip it.
 
 ## Acceptance Criteria Verification
 

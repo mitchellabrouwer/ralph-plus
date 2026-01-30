@@ -23,8 +23,8 @@ Think of Ralph+ like a golf team.
 | 🏌️ Player | Role | 🧠 Model (Brain) | 🏑 Clubs (MCPs) | 📋 Training (Skills) |
 |-----------|------|------------------|-----------------|---------------------|
 | architect | Sets project architecture and quality gates | opus | codex, gemini, context7 | project-init, architecture |
-| strategist | Reads the course, plans the round | opus | codex, gemini, context7 | initiative-prd |
-| planner | Plans each shot | opus | codex, gemini, context7 | - |
+| strategist | Reads the course, plans the round | opus | codex, gemini, context7 | tasks |
+| planner | Plans each shot | opus | codex, gemini, context7 | architecture |
 | tdd | Executes the shots | opus | codex, context7 | test-driven-development |
 | e2e | Checks the ball landed where expected | sonnet | playwright, context7 | - |
 | quality-gate | Rules official, checks the scorecard | haiku | - | - |
@@ -38,9 +38,9 @@ You handle strategy. The agents handle everything else.
  YOU                          AGENTS (autonomous)
   │                               │
   │  1. Describe feature          │
-  │  2. Answer questions ◄────►  strategist (researches, asks, produces prd-<initiative>.json)
-  │  3. Review prd-<initiative>.json    │
-  │  4. Run run-initiative-loop.sh              │
+  │  2. Answer questions ◄────►  strategist (researches, asks, produces task-<name>.json)
+  │  3. Review task-<name>.json         │
+  │  4. Run run-task-loop.sh            │
   │                               │
   │                          per story:
   │                               ├── planner       (technical plan)
@@ -77,34 +77,32 @@ The strategist will:
 - Look up relevant library docs via Context7, Codex, and Gemini
 - Ask you 3-5 clarifying questions about scope, priority, and risk
 - Decompose the feature into small, dependency-ordered user stories
-- Write `docs/initiatives/prd-<initiative>.json`
+- Write `docs/tasks/task-<name>.json`
 
 This is where you focus your energy. The better the stories and acceptance criteria, the better the autonomous execution.
 
-An initiative can be an epic or a single feature. Use the depth that fits your app.
+A task can be an epic or a single feature. Use the depth that fits your app.
 
-### Step 2: Review prd-<initiative>.json (optional)
+### Step 2: Review task-<name>.json (optional)
 
 Check that stories are small enough (one context window each), ordered by dependency, and have clear acceptance criteria. Edit directly if needed.
 
-### Step 2.5: View PRDs in a TUI
+### Step 2.5: View tasks in the dashboard
 
 ```bash
-./scripts/initiative-browser.sh --list
-./scripts/initiative-browser.sh prd-<initiative>.json
+./scripts/dashboard.sh --list
+./scripts/dashboard.sh task-<name>.json
 ```
-
-The viewer uses `less` for vim style navigation and `jq` for color.
 
 ### Step 3: Run the loop
 
 ```bash
-./scripts/run-initiative-loop.sh --prd prd-<initiative>.json [max_iterations]
+./scripts/run-task-loop.sh --task task-<name>.json [max_iterations]
 ```
 
 Default is 10 iterations. Each iteration implements one story. The script:
 
-1. Reads the selected `prd-<initiative>.json`, picks the highest priority story where `passes: false`
+1. Reads the selected `task-<name>.json`, picks the highest priority story where `passes: false`
 2. Runs the 5-agent pipeline for that story
 3. If all stories pass, exits with success
 4. Otherwise, starts the next iteration for the next story
@@ -112,7 +110,7 @@ Default is 10 iterations. Each iteration implements one story. The script:
 
 ### Step 4: Check results
 
-Stories that passed have `passes: true` in `prd-<initiative>.json`. Failed stories have details in their `notes` field. Learnings from each story are appended to `progress-<initiative>.txt` in `docs/initiatives/`.
+Stories that passed have `passes: true` in `task-<name>.json`. Failed stories have details in their `notes` field. Learnings from each story are appended to `progress-<name>.txt` in `docs/tasks/`.
 
 ## Pipeline
 
@@ -130,23 +128,48 @@ When quality-gate or e2e fails, the orchestrator retries with increasing scope:
 FAIL
  ├── Retry 1: re-run tdd with failure context, then re-verify
  ├── Retry 2: re-run planner + tdd (new approach), then re-verify
- └── Retry 3: mark story failed in prd-<initiative>.json notes, move to next story
+ └── Retry 3: mark story failed in task-<name>.json notes, move to next story
 ```
 
 Each retry passes the specific failure details (error output, what check failed) so the agent can make targeted fixes rather than guessing.
 
 ## Setup
 
-1. Copy `scripts/` into your project
-2. Copy agents from `agents/` into your project's `.claude/agents/`
-3. Copy skills from `skills/` into your project's `.claude/skills/`
-4. Configure MCPs in your project's `.mcp.json`:
+### 1. Agents
+
+Copy each `.md` file from `agents/` into your project's `.claude/agents/`:
+
+```bash
+mkdir -p .claude/agents
+cp path/to/ralph-plus/agents/*.md .claude/agents/
+```
+
+### 2. Skills
+
+Copy each skill directory from `skills/` into your project's `.claude/skills/`:
+
+```bash
+mkdir -p .claude/skills
+cp -r path/to/ralph-plus/skills/* .claude/skills/
+```
+
+### 3. Scripts
+
+Copy `scripts/` into your project root:
+
+```bash
+cp -r path/to/ralph-plus/scripts .
+```
+
+### 4. MCPs
+
+Configure the MCP servers your agents need in your project's `.mcp.json`. See `.mcp.json` in this repo for a working example.
 
 | 🏑 Club | Package | Carried by |
 |---------|---------|------------|
-| Context7 | `@upstash/context7-mcp` | strategist, planner, tdd, e2e |
-| Gemini | `gemini-mcp-tool` | strategist, planner |
-| Codex | `codex mcp-server` | strategist, planner, tdd |
+| Context7 | `@upstash/context7-mcp` | architect, strategist, planner, tdd, e2e |
+| Gemini | `gemini-mcp-tool` | architect, strategist, planner |
+| Codex | `codex mcp-server` | architect, strategist, planner, tdd |
 | Playwright | `@playwright/mcp` | e2e |
 
 ## File Structure
@@ -154,14 +177,14 @@ Each retry passes the specific failure details (error output, what check failed)
 | Location | Purpose |
 |----------|---------|
 | `agents/` | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
-| `skills/` | 📋 Training modules (initiative-prd, project-init, architecture, test-driven-development, git-commit) |
-| `scripts/run-initiative-loop.sh` | Bash loop that runs one story per iteration |
+| `skills/` | 📋 Training modules (tasks, project-init, architecture, test-driven-development, git-commit) |
+| `scripts/run-task-loop.sh` | Bash loop that runs one story per iteration |
 | `scripts/CLAUDE.md` | Orchestrator prompt (coordinates the agents) |
-| `docs/initiatives/` | PRDs and progress logs per initiative |
-| `docs/initiatives/prd-<initiative>.json` | Stories with pass/fail status (created by strategist) |
-| `docs/initiatives/progress-<initiative>.txt` | Append-only learnings log (created at runtime) |
-| `docs/architecture.md` | Short architecture notes shared across initiatives |
-| `scripts/initiative-browser.sh` | TUI style PRD viewer |
+| `docs/tasks/` | Task files and progress logs |
+| `docs/tasks/task-<name>.json` | Stories with pass/fail status (created by strategist) |
+| `docs/tasks/progress-<name>.txt` | Append-only learnings log (created at runtime) |
+| `docs/architecture.md` | Short architecture notes shared across tasks |
+| `scripts/dashboard.sh` | Interactive task dashboard |
 | `docs/reference/ralph/` | Legacy Ralph reference (original single agent flow) |
 
 ## Credits

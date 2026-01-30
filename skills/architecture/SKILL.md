@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: "Create or update a short architecture note for the project. Use when starting a new initiative if docs/architecture.md is missing."
+description: "Create or update a short architecture note for the project. Use when starting a new project if docs/architecture.md is missing."
 ---
 
 # Architecture Note
@@ -89,6 +89,14 @@ One line architecture statement.
 - Duplicated types between frontend and backend
 - Business logic in handlers or UI hooks
 - Mocking external services instead of interfaces
+
+## Quality Gates
+| Gate | Command |
+|------|---------|
+| Typecheck | [command or "n/a"] |
+| Lint | [command or "n/a"] |
+| Format | [command or "n/a"] |
+| Test | [command or "n/a"] |
 
 ## Guidelines
 - Shared types live in one place and are reused

@@ -1,11 +1,11 @@
 ---
-name: initiative-prd
-description: "Create an initiative PRD JSON with risk, test requirements, and clarifying questions. Use when planning a new epic or feature and you need docs/initiatives/prd-<initiative>.json."
+name: tasks
+description: "Create a task JSON with user stories, risk levels, test requirements, and clarifying questions. Use when planning a new feature and you need docs/tasks/task-<name>.json."
 ---
 
-# Initiative PRD Generator
+# Task Generator
 
-Create a PRD directly in the Ralph+ `prd-<initiative>.json` format, with risk levels, test requirements, and structured clarifying questions.
+Create a task breakdown in the Ralph+ `task-<name>.json` format, with risk levels, test requirements, and structured clarifying questions.
 
 ---
 
@@ -15,9 +15,9 @@ Create a PRD directly in the Ralph+ `prd-<initiative>.json` format, with risk le
 2. Use AskUserQuestion for structured clarifying questions
 3. Use Context7 MCP to look up relevant library/framework documentation
 4. Generate a structured PRD with risk levels and test requirements
-5. Write `docs/initiatives/prd-<initiative>.json`
+5. Write `docs/tasks/task-<name>.json`
 
-**Important:** Do NOT start implementing. Just create `prd-<initiative>.json`.
+**Important:** Do NOT start implementing. Just create `task-<name>.json`.
 
 ---
 
@@ -141,8 +141,8 @@ The PRD reader will be an AI agent in the Ralph+ pipeline. Therefore:
 ## Output
 
 - **Format:** JSON (`.json`)
-- **Location:** `docs/initiatives/`
-- **Filename:** `prd-<initiative>.json`
+- **Location:** `docs/tasks/`
+- **Filename:** `task-<name>.json`
 
 ## Output Format
 
@@ -201,4 +201,4 @@ Before saving the PRD:
 - [ ] Functional requirements are numbered and unambiguous
 - [ ] Non-goals section defines clear boundaries
 - [ ] Quality gates section specifies which checks apply
-- [ ] Saved to `docs/initiatives/prd-<initiative>.json`
+- [ ] Saved to `docs/tasks/task-<name>.json`

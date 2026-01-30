@@ -1,25 +1,25 @@
 #!/bin/bash
 # Ralph+ - Multi-agent pipeline for autonomous story implementation
-# Usage: ./run-initiative-loop.sh --prd prd-<initiative>.json [max_iterations]
+# Usage: ./run-task-loop.sh --task task-<name>.json [max_iterations]
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PRD_DIR="$SCRIPT_DIR/../docs/initiatives"
-CURRENT_PRD_FILE="$SCRIPT_DIR/.current-prd"
+TASK_DIR="$SCRIPT_DIR/../docs/tasks"
+CURRENT_TASK_FILE="$SCRIPT_DIR/.current-task"
 CURRENT_PROGRESS_FILE="$SCRIPT_DIR/.current-progress"
 
-PRD_NAME=""
+TASK_NAME=""
 MAX_ITERATIONS=10
 
 while [[ $# -gt 0 ]]; do
   case $1 in
-    --prd)
-      PRD_NAME="$2"
+    --task)
+      TASK_NAME="$2"
       shift 2
       ;;
-    --prd=*)
-      PRD_NAME="${1#*=}"
+    --task=*)
+      TASK_NAME="${1#*=}"
       shift
       ;;
     *)
@@ -28,70 +28,70 @@ while [[ $# -gt 0 ]]; do
         shift
       else
         echo "Error: Unknown argument '$1'"
-        echo "Usage: ./run-initiative-loop.sh --prd prd-<initiative>.json [max_iterations]"
+        echo "Usage: ./run-task-loop.sh --task task-<name>.json [max_iterations]"
         exit 1
       fi
       ;;
   esac
 done
 
-if [ ! -d "$PRD_DIR" ]; then
-  echo "Error: PRD directory not found: $PRD_DIR"
+if [ ! -d "$TASK_DIR" ]; then
+  echo "Error: Tasks directory not found: $TASK_DIR"
   exit 1
 fi
 
-if [ -z "$PRD_NAME" ]; then
+if [ -z "$TASK_NAME" ]; then
   shopt -s nullglob
-  PRD_MATCHES=("$PRD_DIR"/prd-*.json)
+  TASK_MATCHES=("$TASK_DIR"/task-*.json)
   shopt -u nullglob
 
-  if [ "${#PRD_MATCHES[@]}" -eq 0 ]; then
-    echo "Error: No PRD files found in $PRD_DIR"
+  if [ "${#TASK_MATCHES[@]}" -eq 0 ]; then
+    echo "Error: No task files found in $TASK_DIR"
     exit 1
-  elif [ "${#PRD_MATCHES[@]}" -eq 1 ]; then
-    PRD_FILE="${PRD_MATCHES[0]}"
+  elif [ "${#TASK_MATCHES[@]}" -eq 1 ]; then
+    TASK_FILE="${TASK_MATCHES[0]}"
   else
-    echo "Error: --prd is required when multiple PRDs exist."
-    echo "Available PRDs:"
-    ls -1 "$PRD_DIR"/prd-*.json 2>/dev/null | xargs -n 1 basename || true
+    echo "Error: --task is required when multiple task files exist."
+    echo "Available tasks:"
+    ls -1 "$TASK_DIR"/task-*.json 2>/dev/null | xargs -n 1 basename || true
     exit 1
   fi
 else
-  if [[ "$PRD_NAME" != *.json ]]; then
-    PRD_NAME="prd-$PRD_NAME.json"
+  if [[ "$TASK_NAME" != *.json ]]; then
+    TASK_NAME="task-$TASK_NAME.json"
   fi
 
-  if [[ "$PRD_NAME" == */* ]]; then
-    PRD_FILE="$PRD_NAME"
+  if [[ "$TASK_NAME" == */* ]]; then
+    TASK_FILE="$TASK_NAME"
   else
-    PRD_FILE="$PRD_DIR/$PRD_NAME"
+    TASK_FILE="$TASK_DIR/$TASK_NAME"
   fi
 fi
 
-if [ ! -f "$PRD_FILE" ]; then
-  echo "Error: PRD file not found: $PRD_FILE"
-  echo "Available PRDs:"
-  ls -1 "$PRD_DIR"/prd-*.json 2>/dev/null | xargs -n 1 basename || true
+if [ ! -f "$TASK_FILE" ]; then
+  echo "Error: Task file not found: $TASK_FILE"
+  echo "Available tasks:"
+  ls -1 "$TASK_DIR"/task-*.json 2>/dev/null | xargs -n 1 basename || true
   exit 1
 fi
 
-PRD_BASENAME=$(basename "$PRD_FILE")
-PRD_SLUG="${PRD_BASENAME#prd-}"
-PRD_SLUG="${PRD_SLUG%.json}"
-PROGRESS_FILE="$PRD_DIR/progress-$PRD_SLUG.txt"
+TASK_BASENAME=$(basename "$TASK_FILE")
+TASK_SLUG="${TASK_BASENAME#task-}"
+TASK_SLUG="${TASK_SLUG%.json}"
+PROGRESS_FILE="$TASK_DIR/progress-$TASK_SLUG.txt"
 
-echo "$PRD_FILE" > "$CURRENT_PRD_FILE"
+echo "$TASK_FILE" > "$CURRENT_TASK_FILE"
 echo "$PROGRESS_FILE" > "$CURRENT_PROGRESS_FILE"
 
 # Initialize progress file if missing
 if [ ! -f "$PROGRESS_FILE" ]; then
   echo "# Ralph+ Progress Log" > "$PROGRESS_FILE"
   echo "Started: $(date)" >> "$PROGRESS_FILE"
-  echo "PRD: $PRD_BASENAME" >> "$PROGRESS_FILE"
+  echo "Task: $TASK_BASENAME" >> "$PROGRESS_FILE"
   echo "---" >> "$PROGRESS_FILE"
 fi
 
-echo "Starting Ralph+ - PRD: $PRD_BASENAME - Max iterations: $MAX_ITERATIONS"
+echo "Starting Ralph+ - Task: $TASK_BASENAME - Max iterations: $MAX_ITERATIONS"
 
 for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo ""

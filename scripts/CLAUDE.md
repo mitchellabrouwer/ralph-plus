@@ -4,10 +4,10 @@ You are the orchestrator of a multi-agent pipeline. You coordinate specialized a
 
 ## Your Task
 
-1. Read `scripts/.current-prd` to get the active PRD file path, then read that PRD file
+1. Read `scripts/.current-task` to get the active task file path, then read that task file
 2. Read `scripts/.current-progress` to get the progress log path, then read it
-3. If either file is missing, stop and ask the user to run the loop with `--prd`
-4. Check you're on the correct branch from PRD `branchName`. If not, check it out or create from main.
+3. If either file is missing, stop and ask the user to run the loop with `--task`
+4. Check you're on the correct branch from the task file's `branchName`. If not, check it out or create from main.
 5. Pick the **highest priority** user story where `passes: false`
 6. Run the agent pipeline to implement that story
 7. If ALL stories now have `passes: true`, reply with `<promise>COMPLETE</promise>`
@@ -22,7 +22,7 @@ Run these agents **sequentially** using the Task tool. Each agent returns result
 
 Spawn the `planner` agent. Pass it:
 - The story details (id, title, description, acceptance criteria, risk level, test requirements)
-- The project's quality gates config from the active PRD file
+- The project's quality gates config from the active task file
 - Any relevant codebase patterns from the active progress log
 
 The planner returns an implementation plan with: files to create/modify, ordered implementation steps, test strategy, risk areas, and edge cases.
@@ -50,7 +50,7 @@ The e2e agent writes and runs Playwright acceptance tests. It returns pass/fail 
 
 Spawn the `quality-gate` agent. Pass it:
 - The story details and acceptance criteria
-- The quality gates config from the active PRD file
+- The quality gates config from the active task file
 - What the tdd agent changed
 - E2E results (if applicable)
 
@@ -63,7 +63,7 @@ The quality-gate runs static checks (typecheck, lint, format) and the full test 
 - What files were changed
 - What was implemented (for the progress log)
 
-The committer commits, updates the active PRD file to set `passes: true`, and appends learnings to the active progress log.
+The committer commits, updates the active task file to set `passes: true`, and appends learnings to the active progress log.
 
 ## Failure Escalation
 
@@ -88,11 +88,11 @@ Then run `tdd` fresh with the new plan, followed by `e2e` (if applicable) and `q
 
 ### Retry 3: Mark story failed
 
-Mark the story as failed. Update the active PRD file to add failure details to the story's `notes` field. Do NOT set `passes: true`. Move on to the next story.
+Mark the story as failed. Update the active task file to add failure details to the story's `notes` field. Do NOT set `passes: true`. Move on to the next story.
 
 ## After Committer Completes
 
-Read the active PRD file again. If ALL stories have `passes: true`, output `<promise>COMPLETE</promise>`. Otherwise end normally (the bash loop starts another iteration for the next story).
+Read the active task file again. If ALL stories have `passes: true`, output `<promise>COMPLETE</promise>`. Otherwise end normally (the bash loop starts another iteration for the next story).
 
 ## Rules
 

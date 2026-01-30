@@ -22,12 +22,9 @@ Set up architecture and quality gates from day one. Keep it minimal and aligned 
    - Keep the list short and practical: typecheck, lint, format, tests.
 
 4. **Wire commands**
-   - Add or align scripts so these exist and are runnable:
-     - `npm run type:check`
-     - `npm run lint`
-     - `npm run format:check`
-     - `npm test`
+   - Discover the project's existing tooling and wire runnable commands for: typecheck, lint, format check, and tests.
    - Reuse existing tooling. Do not introduce new frameworks unless required by the architecture doc.
+   - Record the exact commands in the Quality Gates table in `docs/architecture.md`. Mark any gate that does not apply as "n/a".
 
 5. **Lint rules**
    - If linting exists, add or align a rule for max function length of 100 lines.
