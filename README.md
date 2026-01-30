@@ -1,63 +1,141 @@
-# Ralph
+# Ralph+ ⛳
+
+A multi-agent pipeline for autonomous feature implementation using TDD.
+
+## Concepts
+
+Think of Ralph+ like a golf team.
+
+**🏌️ Players (Agents)** - Each player has a specific role on the team. The strategist reads the course. The planner picks the shot. The tdd player executes. They know their job, but they don't all need the same equipment or training.
+
+**📋 Training (Skills)** - Techniques a player can draw on when the situation calls for it. A player might choose between different approaches depending on the lie - deep research vs shallow research, different testing strategies. Multiple players can share the same training. Skills are switchable: the agent reads the one that fits the situation.
+
+**🏑 Clubs (MCPs)** - Different clubs for different shots. You wouldn't putt with a driver. Each player's bag only has the clubs they need. The strategist carries research clubs (Codex, Gemini, Context7). The e2e player carries the Playwright set. The quality-gate carries nothing - it just reads the scorecard.
+
+| | Concept | Directory | What it is |
+|---|---------|-----------|------------|
+| 🏌️ | Players | `agents/` | Agent definitions - who does what |
+| 📋 | Training | `skills/` | Methodology and techniques agents can draw on |
+| 🏑 | Clubs | `.mcp.json` | External tools (AI models, browser, docs) |
+
+## The Team
+
+| 🏌️ Player | Role | 🧠 Model (Brain) | 🏑 Clubs (MCPs) | 📋 Training (Skills) |
+|-----------|------|------------------|-----------------|---------------------|
+| strategist | Reads the course, plans the round | opus | codex, gemini, context7 | prd-plus, ralph-plus |
+| planner | Plans each shot | opus | codex, gemini, context7 | - |
+| tdd | Executes the shots | opus | codex, context7 | test-driven-development |
+| e2e | Checks the ball landed where expected | sonnet | playwright, context7 | - |
+| quality-gate | Rules official, checks the scorecard | haiku | - | - |
+| committer | Records the score | haiku | - | git-commit |
+
+## How It Works
+
+You handle strategy. The agents handle everything else.
+
+```
+ YOU                          AGENTS (autonomous)
+  │                               │
+  │  1. Describe feature          │
+  │  2. Answer questions ◄────►  strategist (researches, asks, produces prd.json)
+  │  3. Review prd.json           │
+  │  4. Run ralph.sh              │
+  │                               │
+  │                          per story:
+  │                               ├── planner       (technical plan)
+  │                               ├── tdd           (Red-Green-Refactor)
+  │                               ├── e2e           (Playwright, high-risk only)
+  │                               ├── quality-gate  (static checks + tests)
+  │                               └── committer     (git commit + tracking)
+  │                               │
+  │                          next story...
+  │                               │
+  │  5. Review commits       ◄── done
+```
 
 ## Usage
 
-### 1. Create a PRD
+### Step 1: Strategy (interactive)
 
-Use the PRD skill to generate a detailed requirements document:
-
-```
-Load the prd skill and create a PRD for [your feature description]
-```
-
-Answer the clarifying questions. The skill saves output to `tasks/prd-[feature-name].md`.
-
-### 2. Convert PRD to Ralph format
-
-Use the Ralph skill to convert the markdown PRD to JSON:
+Open Claude Code in your project and invoke the strategist:
 
 ```
-Load the ralph skill and convert tasks/prd-[feature-name].md to prd.json
+Use the strategist agent to plan [your feature description]
 ```
 
-This creates `prd.json` with user stories structured for autonomous execution.
+The strategist will:
+- Research your codebase (tech stack, patterns, existing tests)
+- Look up relevant library docs via Context7, Codex, and Gemini
+- Ask you 3-5 clarifying questions about scope, priority, and risk
+- Decompose the feature into small, dependency-ordered user stories
+- Write `scripts/ralph-plus/prd.json`
 
-### 3. Run Ralph
+This is where you focus your energy. The better the stories and acceptance criteria, the better the autonomous execution.
+
+### Step 2: Review prd.json (optional)
+
+Check that stories are small enough (one context window each), ordered by dependency, and have clear acceptance criteria. Edit directly if needed.
+
+### Step 3: Run the loop
 
 ```bash
-# Using Amp (default)
-./scripts/ralph/ralph.sh [max_iterations]
-
-# Using Claude Code
-./scripts/ralph/ralph.sh --tool claude [max_iterations]
+./scripts/ralph-plus/ralph.sh [max_iterations]
 ```
 
-Default is 10 iterations. Use `--tool amp` or `--tool claude` to select your AI coding tool.
+Default is 10 iterations. Each iteration implements one story. The script:
 
-## What Ralph Does
+1. Reads `prd.json`, picks the highest priority story where `passes: false`
+2. Runs the 5-agent pipeline for that story
+3. If all stories pass, exits with success
+4. Otherwise, starts the next iteration for the next story
+5. Stops at max iterations if not all stories are done
 
-Ralph will:
+### Step 4: Check results
 
-- Create a feature branch (from PRD `branchName`)
-- Pick the highest priority story where `passes: false`
-- Implement that single story
-- Run quality checks (typecheck, tests)
-- Commit if checks pass
-- Update `prd.json` to mark story as `passes: true`
-- Append learnings to `progress.txt`
-- Repeat until all stories pass or max iterations reached
+Stories that passed have `passes: true` in `prd.json`. Failed stories have details in their `notes` field. Learnings from each story are appended to `progress.txt`.
 
-## Key Files
+## Pipeline
 
-| File | Purpose |
-|------|---------|
-| `ralph.sh` | The bash loop that spawns fresh AI instances (supports `--tool amp` or `--tool claude`) |
-| `prompt.md` | Prompt template for Amp |
-| `CLAUDE.md` | Prompt template for Claude Code |
-| `prd.json` | User stories with passes status (the task list) |
-| `prd.json.example` | Example PRD format for reference |
-| `progress.txt` | Append-only learnings for future iterations |
-| `skills/prd/` | Skill for generating PRDs (works with Amp and Claude Code) |
-| `skills/ralph/` | Skill for converting PRDs to JSON (works with Amp and Claude Code) |
-| `.claude-plugin/` | Plugin manifest for Claude Code marketplace discovery |
-| `flowchart/` | Interactive visualization of how Ralph works |
+Each story goes through up to 5 agents sequentially:
+
+```
+planner ──► tdd ──► e2e (high-risk only) ──► quality-gate ──► committer
+```
+
+### Failure escalation
+
+When quality-gate or e2e fails, the orchestrator retries with increasing scope:
+
+```
+FAIL
+ ├── Retry 1: re-run tdd with failure context, then re-verify
+ ├── Retry 2: re-run planner + tdd (new approach), then re-verify
+ └── Retry 3: mark story failed in prd.json notes, move to next story
+```
+
+Each retry passes the specific failure details (error output, what check failed) so the agent can make targeted fixes rather than guessing.
+
+## Setup
+
+1. Copy `scripts/ralph-plus/` into your project
+2. Copy agents from `agents/` into your project's `.claude/agents/`
+3. Copy skills from `skills/` into your project's `.claude/skills/`
+4. Configure MCPs in your project's `.mcp.json`:
+
+| 🏑 Club | Package | Carried by |
+|---------|---------|------------|
+| Context7 | `@upstash/context7-mcp` | strategist, planner, tdd, e2e |
+| Gemini | `gemini-mcp-tool` | strategist, planner |
+| Codex | `codex mcp-server` | strategist, planner, tdd |
+| Playwright | `@playwright/mcp` | e2e |
+
+## File Structure
+
+| Location | Purpose |
+|----------|---------|
+| `agents/` | 🏌️ Player definitions (strategist, planner, tdd, e2e, quality-gate, committer) |
+| `skills/` | 📋 Training modules (prd-plus, ralph-plus, test-driven-development, git-commit) |
+| `scripts/ralph-plus/ralph.sh` | Bash loop that runs one story per iteration |
+| `scripts/ralph-plus/CLAUDE.md` | Orchestrator prompt (coordinates the agents) |
+| `scripts/ralph-plus/prd.json` | Stories with pass/fail status (created by strategist) |
+| `scripts/ralph-plus/progress.txt` | Append-only learnings log (created at runtime) |
