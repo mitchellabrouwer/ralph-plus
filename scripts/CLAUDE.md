@@ -22,6 +22,7 @@ Run these agents **sequentially** using the Task tool. Each agent returns result
 
 Spawn the `planner` agent. Pass it:
 - The story details (id, title, description, acceptance criteria, risk level, test requirements)
+- The PRD file path from the task file's `prd` field
 - The project's quality gates config from the active task file
 - Any relevant codebase patterns from the active progress log
 

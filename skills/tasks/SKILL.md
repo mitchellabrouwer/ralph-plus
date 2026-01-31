@@ -1,140 +1,94 @@
 ---
 name: tasks
-description: "Create a task JSON with user stories, risk levels, test requirements, and clarifying questions. Use when planning a new feature and you need docs/tasks/task-<name>.json."
+description: "Convert a PRD markdown file into a task JSON for the Ralph+ pipeline. Use when you have docs/tasks/prd-<name>.md and need docs/tasks/task-<name>.json."
 ---
 
-# Task Generator
+# Task JSON Converter
 
-Create a task breakdown in the Ralph+ `task-<name>.json` format, with risk levels, test requirements, and structured clarifying questions.
+Convert a `docs/tasks/prd-<name>.md` into the Ralph+ `task-<name>.json` execution manifest.
 
 ---
 
 ## The Job
 
-1. Receive a feature description from the user
-2. Use AskUserQuestion for structured clarifying questions
-3. Use Context7 MCP to look up relevant library/framework documentation
-4. Generate a structured PRD with risk levels and test requirements
-5. Write `docs/tasks/task-<name>.json`
+1. Read the specified `docs/tasks/prd-<name>.md`
+2. Extract and convert stories, risk levels, test requirements, and quality gates
+3. Write `docs/tasks/task-<name>.json`
 
 **Important:** Do NOT start implementing. Just create `task-<name>.json`.
 
 ---
 
-## Step 1: Clarifying Questions
+## Step 1: Read the PRD
 
-Use the AskUserQuestion tool to ask structured questions. This gives users a clean interface instead of freeform text.
-
-Focus on:
-
-- **Problem/Goal:** What problem does this solve?
-- **Core Functionality:** What are the key actions?
-- **Scope/Boundaries:** What should it NOT do?
-- **Risk Areas:** Are there complex integrations or critical flows?
-- **Success Criteria:** How do we know it is done?
-
-Ask 3-5 questions using AskUserQuestion with clear options. Example:
-
-```
-Question: "What is the scope of this feature?"
-Options:
-  - "Minimal viable version"
-  - "Full-featured implementation"
-  - "Backend/API only"
-  - "Frontend/UI only"
-```
+Read the PRD markdown at `docs/tasks/prd-<name>.md`. Parse all sections - the PRD follows the structure defined in `skills/prd/SKILL.md`.
 
 ---
 
-## Step 2: Documentation Lookup
+## Step 2: Conversion Rules
 
-Use Context7 MCP to look up relevant documentation for the project's tech stack. This helps you write more accurate acceptance criteria and understand integration points.
+### Stories
 
----
+- Each `### US-NNN:` section becomes one JSON story entry
+- Extract id, title, description, acceptance criteria, risk, and test requirements
+- IDs: Sequential (US-001, US-002, etc.)
+- Priority: Based on document order (first story = priority 1)
+- All stories start with `passes: false` and empty `notes`
 
-## Step 3: PRD Structure
+### Risk Mapping
 
-Use these sections to shape the content, but output only JSON. Map goals and requirements into the PRD `description` and story acceptance criteria. Architecture notes belong in `docs/architecture.md`.
+| PRD Risk | `risk` field | `testRequirements` |
+|----------|-------------|-------------------|
+| low | `"low"` | `{ "unit": true, "integration": true, "e2e": false }` |
+| medium | `"medium"` | `{ "unit": true, "integration": true, "e2e": false }` |
+| high | `"high"` | `{ "unit": true, "integration": true, "e2e": true }` |
 
-### 1. Introduction/Overview
-Brief description of the feature and the problem it solves.
+### Quality Gates
 
-### 2. Goals
-Specific, measurable objectives (bullet list).
+Derive from the PRD's Quality Gates section if present, or from the project's tooling (tsconfig, eslint, prettier, test runner). Defaults:
 
-### 3. User Stories
-
-Each story needs:
-- **Title:** Short descriptive name
-- **Description:** "As a [user], I want [feature] so that [benefit]"
-- **Acceptance Criteria:** Verifiable checklist
-- **Risk Level:** `low`, `medium`, or `high`
-- **Test Requirements:** Which test types are needed
-
-**Format:**
-```markdown
-### US-001: [Title]
-**Description:** As a [user], I want [feature] so that [benefit].
-**Risk:** low | medium | high
-**Test Requirements:** unit, integration [, e2e]
-
-**Acceptance Criteria:**
-- [ ] Specific verifiable criterion
-- [ ] Another criterion
-- [ ] Typecheck passes
-- [ ] Unit tests pass
-- [ ] Integration tests pass
-- [ ] **[High-risk only]** E2E tests pass
+```json
+{
+  "typescript": true,
+  "linting": true,
+  "formatting": true,
+  "unitTests": true,
+  "integrationTests": true
+}
 ```
 
-#### Risk Level Guidelines
+### Story Sizing Validation
 
-| Risk | Description | Test Requirements |
-|------|-------------|-------------------|
-| **low** | Simple CRUD, styling, config changes | unit, integration |
-| **medium** | New business logic, data flow changes, API integrations | unit, integration |
-| **high** | Payment flows, auth, data migrations, complex state machines | unit, integration, e2e |
+Each story must be completable in ONE pipeline iteration (one context window). If a PRD story looks too large, split it before converting. Signs a story is too big:
 
-High-risk stories automatically get E2E test requirements.
+- More than 5 acceptance criteria
+- Touches more than 3 files
+- Cannot be described in 2-3 sentences
 
-### 4. Functional Requirements
-Numbered list: "FR-1: The system must..."
+### Story Ordering Validation
 
-### 5. Non-Goals (Out of Scope)
-What this feature will NOT include.
+Stories must be ordered by dependency. Verify:
+1. Schema/database changes come first
+2. Backend logic comes before UI that depends on it
+3. No story depends on a later story
 
-### 6. Quality Gates
-Specify which quality checks apply to this project:
-- TypeScript compilation
-- Linting
-- Formatting
-- Unit tests
-- Integration tests
+If the PRD ordering is wrong, reorder and adjust priority numbers accordingly.
 
-### 7. Design Considerations (Optional)
-UI/UX requirements, mockups, existing components to reuse.
+### PRD Field
 
-### 8. Technical Considerations (Optional)
-Constraints, dependencies, integration points, performance.
+Every task JSON must include a `prd` field pointing to the source PRD:
 
-### 9. Success Metrics
-How success is measured.
+```json
+"prd": "docs/tasks/prd-<name>.md"
+```
 
-### 10. Open Questions
-Remaining areas needing clarification.
+### Description
 
----
+Pull from the PRD's Introduction/Overview or title.
 
-## Writing for Autonomous Agents
+### Branch Name
 
-The PRD reader will be an AI agent in the Ralph+ pipeline. Therefore:
-
-- Be explicit and unambiguous
-- Avoid jargon or explain it
-- Provide enough detail to understand purpose and core logic
-- Number requirements for easy reference
-- Use concrete examples where helpful
-- Acceptance criteria must be machine-verifiable (not vague)
+Derive from the feature name: `ralph/<feature-name-kebab-case>`.
 
 ---
 
@@ -149,8 +103,9 @@ The PRD reader will be an AI agent in the Ralph+ pipeline. Therefore:
 ```json
 {
   "project": "[Project Name]",
+  "prd": "docs/tasks/prd-<name>.md",
   "branchName": "ralph/[feature-name-kebab-case]",
-  "description": "[Feature description from PRD title or intro]",
+  "description": "[Feature description from PRD intro]",
   "qualityGates": {
     "typescript": true,
     "linting": true,
@@ -188,17 +143,15 @@ The PRD reader will be an AI agent in the Ralph+ pipeline. Therefore:
 
 ## Checklist
 
-Before saving the PRD:
+Before saving the task JSON:
 
-- [ ] Used AskUserQuestion for clarifying questions
-- [ ] Incorporated user's answers
-- [ ] User stories are small and specific (one context window each)
-- [ ] Every story has a risk level assigned
-- [ ] Every story has test requirements specified
-- [ ] High-risk stories include E2E test requirements
+- [ ] Read the PRD markdown file
+- [ ] Every story extracted with correct risk and test requirements
+- [ ] High-risk stories have `e2e: true`
+- [ ] Stories are ordered by dependency (priority numbers match)
+- [ ] Each story is small enough for one context window
+- [ ] No story depends on a later story
 - [ ] Acceptance criteria include quality gates (typecheck, tests)
-- [ ] UI stories do not add browser verification criteria unless explicitly requested
-- [ ] Functional requirements are numbered and unambiguous
-- [ ] Non-goals section defines clear boundaries
-- [ ] Quality gates section specifies which checks apply
+- [ ] `prd` field set to the source PRD path
+- [ ] Quality gates derived from project tooling
 - [ ] Saved to `docs/tasks/task-<name>.json`
