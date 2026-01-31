@@ -1,0 +1,108 @@
+{
+  "project": "Ralph+",
+  "prd": "docs/tasks/prd-tui-dashboard.md",
+  "branchName": "ralph/tui-dashboard",
+  "description": "Upgrade scripts/dashboard.sh with multi-task overview, progress log viewer, live pipeline status indicator, and consistent keyboard navigation.",
+  "qualityGates": {
+    "typescript": false,
+    "linting": true,
+    "formatting": false,
+    "unitTests": false,
+    "integrationTests": false
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Multi-task overview screen",
+      "description": "As a user, I want to see all task files with their pass/fail counts on one screen so that I can quickly assess project-wide progress.",
+      "acceptanceCriteria": [
+        "New screen lists every task-*.json in docs/tasks/ with filename, passing count, and total story count",
+        "Each task row shows a summary like task-auth.json  3/5 passing",
+        "Color coding: all-green if fully passing, yellow if partial, red if zero passing",
+        "User can select a task by number to enter the existing story overview for that task",
+        "This screen is the new default landing screen when multiple task files exist (replaces the old selection prompt)",
+        "Accessible from the story overview via [a] (all tasks) command to return to it",
+        "Shellcheck clean",
+        "Manual verification: running ./scripts/dashboard.sh shows the new screen"
+      ],
+      "priority": 1,
+      "risk": "low",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Progress log viewer",
+      "description": "As a user, I want to view the progress log for the current task inside the dashboard so that I can review what the pipeline has done without switching terminals.",
+      "acceptanceCriteria": [
+        "New [p] command from the story overview opens the progress log viewer",
+        "Viewer shows the content of progress-<task-slug>.txt corresponding to the loaded task",
+        "Content is paginated: shows 30 lines at a time with [n] next / [b] back navigation",
+        "Displays line numbers in the left margin",
+        "[/] command enters search mode: user types a pattern, viewer highlights and jumps to matching lines",
+        "Search results navigable with [n] next match / [N] previous match",
+        "If no progress file exists, shows a No progress log found message",
+        "[q] or [esc] returns to the story overview",
+        "Shellcheck clean"
+      ],
+      "priority": 2,
+      "risk": "medium",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Live pipeline status indicator",
+      "description": "As a user, I want to see whether the pipeline is currently running and which iteration it is on, so I know if work is in progress.",
+      "acceptanceCriteria": [
+        "Dashboard header shows a status indicator: RUNNING (iteration 3/10) or IDLE",
+        "Detection works by checking if a run-task-loop.sh process is alive via pgrep or checking .current-task freshness",
+        "If running, parse the most recent iteration number from the pipeline output or progress log",
+        "Status refreshes each time the user returns to the overview screen (on [r] refresh)",
+        "Indicator uses color: green for running, dim gray for idle",
+        "Shellcheck clean"
+      ],
+      "priority": 3,
+      "risk": "low",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Keyboard navigation improvements",
+      "description": "As a user, I want consistent keyboard shortcuts and a help bar across all screens so the dashboard feels cohesive.",
+      "acceptanceCriteria": [
+        "Every screen shows a bottom command bar with available shortcuts",
+        "[?] on any screen shows a full help overlay listing all commands",
+        "[q] always quits from any screen",
+        "[r] refreshes data on any list screen (overview, multi-task, log viewer)",
+        "Help overlay dismissed with any keypress",
+        "Shellcheck clean"
+      ],
+      "priority": 4,
+      "risk": "low",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
