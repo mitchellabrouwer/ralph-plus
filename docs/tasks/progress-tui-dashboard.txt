@@ -1,0 +1,45 @@
+# Ralph+ Progress Log
+Started: Sat 31 Jan 2026 20:13:37 AEDT
+Task: task-tui-dashboard.json
+---
+
+## Codebase Patterns
+
+### Testing Interactive Bash Scripts
+- BASH_SOURCE guard is essential for making bash scripts sourceable for testing: `[[ "$BASH_SOURCE" == "${0}" ]] && main_loop || return`
+- This allows test suites to source the script and invoke functions directly
+- Enables easy unit and integration testing of interactive shell functions
+
+### Bash Testing Best Practices
+- Bats-core `[[ ]]` glob assertions (`[[ $output == *"pattern"* ]]`) don't reliably fail in certain contexts - prefer explicit grep: `echo "$output" | grep -q "pattern"`
+- TASK_DIR environment variable overrides enable test isolation without mocking filesystem
+- SC2059 shellcheck warnings about variables in printf format strings are informational - the codebase legitimately uses this pattern with ANSI color codes
+
+### Function Contract Changes
+- When making a previously non-returning function return (e.g., adding a way to exit early), document this contract change
+- The [a] command in story overview now returns control to the multi-task overview
+- This changed main_loop from "never returns" to "returns on user request to view all tasks"
+
+---
+
+## 2026-01-31 - US-001: Multi-task overview screen
+- Implemented multi-task overview screen listing all task-*.json files with pass/fail counts and color coding
+- Added show_multi_task_overview() function that parses task files and displays formatted table
+- Added multi_task_loop() for task selection and navigation
+- Integrated with main_loop via [a] command to return from story overview
+- Added BASH_SOURCE guard to make script sourceable for testing
+- Added TASK_DIR environment variable override for test isolation
+- Created comprehensive bats-core test suite with 16 tests (9 unit, 7 integration)
+- Files changed:
+  - scripts/dashboard.sh (multi-task functions, BASH_SOURCE guard, TASK_DIR override)
+  - tests/dashboard.bats (new test file with 16 tests)
+  - tests/test_helper/common-setup.bash (shared test setup)
+  - tests/fixtures/task-alpha.json, task-beta.json, task-gamma.json (test fixtures)
+- **Learnings for future iterations:**
+  - Bats-core glob assertions in `[[ ]]` aren't reliable for test assertions - use grep piping instead
+  - BASH_SOURCE guard pattern is essential for testable bash scripts
+  - TASK_DIR environment variable override is an effective way to achieve test isolation in bash
+  - SC2059 warnings about printf format strings are OK when intentionally using variables with ANSI codes
+  - Function contracts change when adding early exit paths - document these changes for callers
+
+---
