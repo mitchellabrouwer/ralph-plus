@@ -1,6 +1,6 @@
 ---
-name: prd
-description: "Generate a Product Requirements Document (PRD) for a new feature. Use when planning a feature or starting a new project. Produces docs/tasks/prd-<name>.md that the /tasks skill converts to task JSON."
+name: product-requirement-document
+description: "PRD reference format for the strategist agent. Do NOT invoke this skill directly. When the user asks to create a PRD, use the strategist agent (Task tool with subagent_type=strategist) which produces both prd-<name>.md and task-<name>.json in one flow."
 ---
 
 # PRD Generator
