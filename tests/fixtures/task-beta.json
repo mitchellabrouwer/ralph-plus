@@ -1,0 +1,18 @@
+{
+  "project": "Beta",
+  "prd": "docs/tasks/prd-beta.md",
+  "branchName": "beta",
+  "description": "Beta task",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Story one",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Story two",
+      "passes": true
+    }
+  ]
+}

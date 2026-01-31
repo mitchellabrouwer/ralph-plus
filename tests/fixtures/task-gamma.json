@@ -1,0 +1,28 @@
+{
+  "project": "Gamma",
+  "prd": "docs/tasks/prd-gamma.md",
+  "branchName": "gamma",
+  "description": "Gamma task",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Story one",
+      "passes": false
+    },
+    {
+      "id": "US-002",
+      "title": "Story two",
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "title": "Story three",
+      "passes": false
+    },
+    {
+      "id": "US-004",
+      "title": "Story four",
+      "passes": false
+    }
+  ]
+}

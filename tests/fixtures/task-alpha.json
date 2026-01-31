@@ -1,0 +1,23 @@
+{
+  "project": "Alpha",
+  "prd": "docs/tasks/prd-alpha.md",
+  "branchName": "alpha",
+  "description": "Alpha task",
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Story one",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Story two",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Story three",
+      "passes": false
+    }
+  ]
+}
