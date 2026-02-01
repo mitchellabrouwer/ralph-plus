@@ -1,6 +1,6 @@
 ---
 name: committer
-description: "Commit code progress to git , update prd progress, update current prd task and record key learnings."
+description: "Commit code progress to git, update prd progress, update current prd task and record key learnings.\n\nExamples:\n\n- Example 1:\n  user: \"Commit changes for US-001: Add status field. Files changed: src/db/schema.ts, src/db/migrations/001.ts. Summary: added status column with default 'pending'.\"\n  assistant: \"I'll use the committer to commit, update tracking files, and record learnings.\"\n  [Launches committer agent via Task tool with: story id/title, files changed, implementation summary]"
 model: haiku
 color: gray
 tools: Read, Write, Edit, Glob, Grep, Bash
@@ -22,9 +22,17 @@ feat | fix | chore | docs | style | refactor | perf | test | build | ci | securi
 
 `work-type/branch-name` always branch off latest main
 
+```bash
+git add <changed-files> && git commit -m "feat: US-XXX title"
+```
+
 ### 2. Update and commit the active task file
 
 Read `scripts/.current-task` to get the PRD path. Update that file: find the story by ID, set `passes: true`.
+
+```bash
+git add <task-file> && git commit -m "chore: mark US-XXX as passing"
+```
 
 ### 3. Update and commit Progress Log
 
@@ -43,9 +51,17 @@ Read `scripts/.current-progress` to get the progress log path. Append to that fi
 
 If you discovered a **reusable pattern**, add it to the `## Codebase Patterns` section at the top of the active progress log (create it if missing).
 
+```bash
+git add <progress-file> && git commit -m "chore: update progress log for US-XXX"
+```
+
 ### 4. Update and commit CLAUDE.md (if applicable)
 
 Check if edited directories have CLAUDE.md files. If you discovered something future agents should know, add it. This should be very short and to the point.
+
+```bash
+git add <claude-md> && git commit -m "chore: update CLAUDE.md"
+```
 
 ## Rules
 

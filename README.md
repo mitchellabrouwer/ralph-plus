@@ -20,15 +20,15 @@ Think of Ralph+ like a golf team.
 
 ## The Team
 
-| 🏌️ Player    | Role                                        | 🧠 Model (Brain) | 🏑 Clubs (MCPs)         | 📋 Training (Skills)       |
-| ------------ | ------------------------------------------- | ---------------- | ----------------------- | -------------------------- |
-| architect    | Sets project architecture and quality gates | opus             | codex, gemini, context7 | project-init, architecture |
-| strategist   | Reads the course, plans the round           | opus             | codex, gemini, context7 | tasks                      |
-| planner      | Plans each shot                             | opus             | codex, gemini, context7 | architecture               |
-| tdd          | Executes the shots                          | opus             | codex, context7         | test-driven-development    |
-| e2e          | Checks the ball landed where expected       | sonnet           | playwright, context7    | -                          |
-| quality-gate | Rules official, checks the scorecard        | haiku            | -                       | -                          |
-| committer    | Records the score                           | haiku            | -                       | git-commit                 |
+| 🏌️ Player    | Role                                        | 🧠 Model (Brain) | 🏑 Clubs (MCPs)         |
+| ------------ | ------------------------------------------- | ---------------- | ----------------------- |
+| architect    | Sets project architecture and quality gates | opus             | codex, gemini, context7 |
+| strategist   | Reads the course, plans the round           | opus             | codex, gemini, context7 |
+| planner      | Plans each shot                             | opus             | codex, gemini, context7 |
+| tdd          | Executes the shots                          | opus             | codex, context7         |
+| e2e          | Checks the ball landed where expected       | sonnet           | playwright, context7    |
+| quality-gate | Rules official, checks the scorecard        | haiku            | -                       |
+| committer    | Records the score                           | haiku            | -                       |
 
 ## How It Works
 
@@ -39,9 +39,9 @@ You handle strategy. The agents handle everything else.
   │                               │
   │  1. Describe feature          │
   │  2. Answer questions ◄────►  strategist (researches, asks, produces task-<name>.json)
-3. Architect (if first time or feature that goes outside current arch)
-  │  3. Review task-<name>.json         │
-  │  4. Run run-task-loop.sh            │
+  │  3. Architect           ◄──  (if first time or feature outside current arch)
+  │  4. Review task-<name>.json         │
+  │  5. Run run-task-loop.sh            │
   │                               │
   │                          per story:
   │                               ├── planner       (technical plan)
@@ -52,7 +52,7 @@ You handle strategy. The agents handle everything else.
   │                               │
   │                          next story...
   │                               │
-  │  5. Review commits       ◄── done
+  │  6. Review commits       ◄── done
 ```
 
 ## Usage
@@ -194,7 +194,7 @@ Configure the MCP servers your agents need in your project's `.mcp.json`. See `.
 | Location                         | Purpose                                                                                   |
 | -------------------------------- | ----------------------------------------------------------------------------------------- |
 | `agents/`                        | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
-| `skills/`                        | 📋 Custom training modules (tasks, project-init, architecture, git-commit)                |
+| `skills/`                        | 📋 Reference materials (testing-anti-patterns)                                            |
 | `.agents/`                       | 📦 Third-party skills installed via `npx skills add`                                      |
 | `.claude/agents/`                | Symlinks to `agents/` (consumed by Claude Code)                                           |
 | `.claude/skills/`                | Symlinks to `skills/` and `.agents/skills/` (consumed by Claude Code)                     |

@@ -1,6 +1,6 @@
 ---
 name: planner
-description: "Use this agent to determine what story to work on next from the docs/tasks folder. It reads the codebase, looks up documentation, and outputs a structured plan that the tdd agent follows."
+description: "Use this agent to determine what story to work on next from the docs/tasks folder. It reads the codebase, looks up documentation, and outputs a structured plan that the tdd agent follows.\n\nExamples:\n\n- Example 1:\n  user: \"Plan the implementation for US-001: Add status field to tasks table. Risk: low. Test requirements: unit, integration.\"\n  assistant: \"I'll use the planner to analyze the codebase and produce an implementation plan.\"\n  [Launches planner agent via Task tool with: story details, PRD path, quality gates, codebase patterns from progress log]"
 model: opus
 color: cyan
 tools: Read, Glob, Grep, Bash, WebSearch, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__codex__codex, mcp__codex__codex-reply, mcp__gemini__ask-gemini, mcp__gemini__fetch-chunk

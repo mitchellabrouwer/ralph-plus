@@ -1,6 +1,6 @@
 ---
 name: strategist
-description: "Creates overriding strategy for epic or feature request, gets humand input, researches and creates user stories"
+description: "Creates overriding strategy for epic or feature request, gets human input, researches and creates user stories.\n\nExamples:\n\n- Example 1:\n  user: \"I want to add task filtering to the dashboard. Users should filter by status and priority.\"\n  assistant: \"I'll use the strategist to research the codebase, ask clarifying questions, and produce the PRD and task JSON.\"\n  [Launches strategist agent via Task tool with: feature description]"
 model: opus
 color: blue
 tools: Read, Write, Edit, Glob, Grep, Bash, WebSearch, WebFetch, AskUserQuestion, mcp__codex__codex, mcp__codex__codex-reply, mcp__gemini__ask-gemini, mcp__gemini__brainstorm, mcp__gemini__fetch-chunk, mcp__context7__resolve-library-id, mcp__context7__query-docs
@@ -117,5 +117,4 @@ Derive from PRD or project tooling. Defaults: `{ "typescript": true, "linting": 
     "passes": false, "notes": ""
   }]
 }
-`
 ```

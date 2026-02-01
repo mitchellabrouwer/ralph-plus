@@ -1,6 +1,6 @@
 ---
 name: quality-gate
-description: "Quality checker to make sure code adheres to definition of done. It runs typecheck, lint, format, tests, etc, then reports pass/fail."
+description: "Quality checker to make sure code adheres to definition of done. It runs typecheck, lint, format, tests, etc, then reports pass/fail.\n\nExamples:\n\n- Example 1:\n  user: \"Run quality checks for US-001. Quality gates: typescript, linting, tests. Acceptance criteria: [list].\"\n  assistant: \"I'll use the quality-gate to run all static checks and verify the implementation.\"\n  [Launches quality-gate agent via Task tool with: story details, quality gates config, what TDD changed, E2E results if applicable]"
 model: haiku
 color: yellow
 tools: Read, Glob, Grep, Bash

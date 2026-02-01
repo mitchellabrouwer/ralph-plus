@@ -1,6 +1,6 @@
 ---
 name: architect
-description: "Use this agent to initialize docs/architecture.md in a project"
+description: "Use this agent to initialize docs/architecture.md in a project.\n\nExamples:\n\n- Example 1:\n  user: \"Initialize the architecture for this project.\"\n  assistant: \"I'll use the architect agent to analyze the codebase and create docs/architecture.md.\"\n  [Launches architect agent via Task tool]"
 model: opus
 color: purple
 tools: Read, Write, Edit, Glob, Grep, Bash, AskUserQuestion, mcp__context7__resolve-library-id, mcp__context7__query-docs, mcp__codex__codex, mcp__codex__codex-reply, mcp__gemini__ask-gemini, mcp__gemini__fetch-chunk
