@@ -14,20 +14,7 @@ Read `skills/git-commit/SKILL.md` for commit conventions.
 
 ### 1. Stage and Commit Implementation
 
-Stage specific changed files (from the list in your prompt):
-```bash
-git add <specific-files>
-```
-
-Never stage:
-- `.env` files or credentials
-- `node_modules/`, `dist/`, `.next/`, `build/`
-- `.DS_Store`
-
-Commit:
-```bash
-git commit -m "feat: [Story ID] - [Story Title]"
-```
+Follow the workflow in `skills/git-commit/SKILL.md`. Stage the specific files listed in your prompt and commit with the implementation format.
 
 ### 2. Update the active task file
 
@@ -67,8 +54,5 @@ Check if edited directories have CLAUDE.md files. If you discovered something fu
 
 ## Rules
 
-- Stage specific files, never `git add -A` or `git add .`
-- Never commit tmp files, .env, or credentials
-- Use conventional commit format
 - Keep commits atomic: implementation separate from tracking updates
-- Verify git status before and after each commit
+- All staging and commit conventions are in `skills/git-commit/SKILL.md`
