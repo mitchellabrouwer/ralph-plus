@@ -12,23 +12,23 @@ Think of Ralph+ like a golf team.
 
 **🏑 Clubs (MCPs)** - Different clubs for different shots. You wouldn't putt with a driver. Each player's bag only has the clubs they need. The strategist carries research clubs (Codex, Gemini, Context7). The e2e player carries the Playwright set. The quality-gate carries nothing - it just reads the scorecard.
 
-| | Concept | Directory | What it is |
-|---|---------|-----------|------------|
-| 🏌️ | Players | `agents/` | Agent definitions - who does what |
-| 📋 | Training | `skills/` | Methodology and techniques agents can draw on |
-| 🏑 | Clubs | `.mcp.json` | External tools (AI models, browser, docs) |
+|     | Concept  | Directory   | What it is                                    |
+| --- | -------- | ----------- | --------------------------------------------- |
+| 🏌️  | Players  | `agents/`   | Agent definitions - who does what             |
+| 📋  | Training | `skills/`   | Methodology and techniques agents can draw on |
+| 🏑  | Clubs    | `.mcp.json` | External tools (AI models, browser, docs)     |
 
 ## The Team
 
-| 🏌️ Player | Role | 🧠 Model (Brain) | 🏑 Clubs (MCPs) | 📋 Training (Skills) |
-|-----------|------|------------------|-----------------|---------------------|
-| architect | Sets project architecture and quality gates | opus | codex, gemini, context7 | project-init, architecture |
-| strategist | Reads the course, plans the round | opus | codex, gemini, context7 | tasks |
-| planner | Plans each shot | opus | codex, gemini, context7 | architecture |
-| tdd | Executes the shots | opus | codex, context7 | test-driven-development |
-| e2e | Checks the ball landed where expected | sonnet | playwright, context7 | - |
-| quality-gate | Rules official, checks the scorecard | haiku | - | - |
-| committer | Records the score | haiku | - | git-commit |
+| 🏌️ Player    | Role                                        | 🧠 Model (Brain) | 🏑 Clubs (MCPs)         | 📋 Training (Skills)       |
+| ------------ | ------------------------------------------- | ---------------- | ----------------------- | -------------------------- |
+| architect    | Sets project architecture and quality gates | opus             | codex, gemini, context7 | project-init, architecture |
+| strategist   | Reads the course, plans the round           | opus             | codex, gemini, context7 | tasks                      |
+| planner      | Plans each shot                             | opus             | codex, gemini, context7 | architecture               |
+| tdd          | Executes the shots                          | opus             | codex, context7         | test-driven-development    |
+| e2e          | Checks the ball landed where expected       | sonnet           | playwright, context7    | -                          |
+| quality-gate | Rules official, checks the scorecard        | haiku            | -                       | -                          |
+| committer    | Records the score                           | haiku            | -                       | git-commit                 |
 
 ## How It Works
 
@@ -39,6 +39,7 @@ You handle strategy. The agents handle everything else.
   │                               │
   │  1. Describe feature          │
   │  2. Answer questions ◄────►  strategist (researches, asks, produces task-<name>.json)
+3. Architect (if first time or feature that goes outside current arch)
   │  3. Review task-<name>.json         │
   │  4. Run run-task-loop.sh            │
   │                               │
@@ -73,6 +74,7 @@ Use the strategist agent to plan [your feature description]
 ```
 
 The strategist will:
+
 - Research your codebase (tech stack, patterns, existing tests)
 - Look up relevant library docs via Context7, Codex, and Gemini
 - Ask you 3-5 clarifying questions about scope, priority, and risk
@@ -180,31 +182,31 @@ Installed skills land in `.agents/skills/` and are symlinked into `.claude/skill
 
 Configure the MCP servers your agents need in your project's `.mcp.json`. See `.mcp.json` in this repo for a working example.
 
-| 🏑 Club | Package | Carried by |
-|---------|---------|------------|
-| Context7 | `@upstash/context7-mcp` | architect, strategist, planner, tdd, e2e |
-| Gemini | `gemini-mcp-tool` | architect, strategist, planner |
-| Codex | `codex mcp-server` | architect, strategist, planner, tdd |
-| Playwright | `@playwright/mcp` | e2e |
+| 🏑 Club    | Package                 | Carried by                               |
+| ---------- | ----------------------- | ---------------------------------------- |
+| Context7   | `@upstash/context7-mcp` | architect, strategist, planner, tdd, e2e |
+| Gemini     | `gemini-mcp-tool`       | architect, strategist, planner           |
+| Codex      | `codex mcp-server`      | architect, strategist, planner, tdd      |
+| Playwright | `@playwright/mcp`       | e2e                                      |
 
 ## File Structure
 
-| Location | Purpose |
-|----------|---------|
-| `agents/` | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
-| `skills/` | 📋 Custom training modules (tasks, project-init, architecture, git-commit) |
-| `.agents/` | 📦 Third-party skills installed via `npx skills add` |
-| `.claude/agents/` | Symlinks to `agents/` (consumed by Claude Code) |
-| `.claude/skills/` | Symlinks to `skills/` and `.agents/skills/` (consumed by Claude Code) |
-| `scripts/run-task-loop.sh` | Bash loop that runs one story per iteration |
-| `scripts/CLAUDE.md` | Orchestrator prompt (coordinates the agents) |
-| `docs/tasks/` | Task files and progress logs |
-| `docs/tasks/task-<name>.json` | Stories with pass/fail status (created by strategist) |
-| `docs/tasks/progress-<name>.txt` | Append-only learnings log (created at runtime) |
-| `docs/architecture.md` | Short architecture notes shared across tasks |
-| `scripts/dashboard.sh` | Interactive task dashboard |
-| `docs/reference/ralph/` | Legacy Ralph reference (original single agent flow) |
+| Location                         | Purpose                                                                                   |
+| -------------------------------- | ----------------------------------------------------------------------------------------- |
+| `agents/`                        | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
+| `skills/`                        | 📋 Custom training modules (tasks, project-init, architecture, git-commit)                |
+| `.agents/`                       | 📦 Third-party skills installed via `npx skills add`                                      |
+| `.claude/agents/`                | Symlinks to `agents/` (consumed by Claude Code)                                           |
+| `.claude/skills/`                | Symlinks to `skills/` and `.agents/skills/` (consumed by Claude Code)                     |
+| `scripts/run-task-loop.sh`       | Bash loop that runs one story per iteration                                               |
+| `scripts/CLAUDE.md`              | Orchestrator prompt (coordinates the agents)                                              |
+| `docs/tasks/`                    | Task files and progress logs                                                              |
+| `docs/tasks/task-<name>.json`    | Stories with pass/fail status (created by strategist)                                     |
+| `docs/tasks/progress-<name>.txt` | Append-only learnings log (created at runtime)                                            |
+| `docs/architecture.md`           | Short architecture notes shared across tasks                                              |
+| `scripts/dashboard.sh`           | Interactive task dashboard                                                                |
+| `docs/reference/ralph/`          | Legacy Ralph reference (original single agent flow)                                       |
 
 ## Credits
 
-Based on the original Ralph project: https://github.com/snarktank/ralph
+Based on the original Ralph project: <https://github.com/snarktank/ralph>
