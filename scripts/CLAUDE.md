@@ -27,6 +27,8 @@ Spawn the `planner` agent. Pass it:
 - The project's quality gates config from the active task file
 - Any relevant codebase patterns from the active progress log
 
+**Token savings:** Instruct the planner to use `mcp__gemini__ask-gemini` for codebase analysis, file reading, pattern identification, and doc lookups. Gemini should do the heavy reading. The planner uses its own reasoning only for synthesizing the final plan. Include this instruction in the prompt you pass to the planner.
+
 The planner returns an implementation plan with: files to create/modify, ordered implementation steps, test strategy, risk areas, and edge cases.
 
 ### Agent 2: TDD
@@ -50,26 +52,30 @@ The e2e agent writes and runs Playwright acceptance tests. It returns pass/fail 
 
 ### Agent 4: Quality Gate
 
-Spawn the `quality-gate` agent. Pass it:
+Spawn the `quality-gate` agent with `model: "haiku"`. Pass it:
 - The story details and acceptance criteria
 - The quality gates config from the active task file
 - What the tdd agent changed
 - E2E results (if applicable)
 
-The quality-gate runs static checks (typecheck, lint, format) and the full test suite. It returns a pass/fail report.
+The quality-gate runs static checks (typecheck, lint, format) and the full test suite. It returns a pass/fail report. This agent only runs commands and reports results - it does not fix code. Use haiku to save tokens.
 
 ### Agent 5: Committer
 
-**Only spawn if quality-gate passed.** Spawn the `committer` agent. Pass it:
+**Only spawn if quality-gate passed.** Spawn the `committer` agent with `model: "haiku"`. Pass it:
 - The story id and title
 - What files were changed
 - What was implemented (for the progress log)
 
-The committer commits, updates the active task file to set `passes: true`, and appends learnings to the active progress log.
+The committer commits, updates the active task file to set `passes: true`, and appends learnings to the active progress log. Use haiku to save tokens - this is mechanical work.
 
 ## Failure Escalation
 
 If the quality-gate or e2e agent fails:
+
+### Quick fix: Codex attempt
+
+Before escalating to TDD, call `mcp__codex__codex` with the failing check output and ask it to fix the errors. Pass it the error output and the files involved. Then re-run the quality-gate. Only escalate to Retry 1 if Codex could not resolve it.
 
 ### Retry 1: Re-run TDD with failure context
 

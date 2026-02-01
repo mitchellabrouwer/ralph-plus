@@ -35,16 +35,13 @@ Standalone improvements to the Ralph+ pipeline that sit outside the normal PRD/s
 
 **Goal:** Identify which pipeline steps can be delegated to Gemini (`mcp__gemini__ask-gemini`) or Codex (`mcp__codex__codex`) and update agent prompts to prefer them for suitable work.
 
-**Candidates for offloading:**
-- **Planner agent:** Use Gemini for initial codebase analysis and doc lookup. Claude only for final plan synthesis.
-- **TDD agent:** Use Codex for boilerplate test scaffolding and implementation. Claude for tricky logic.
-- **Quality gate agent:** Use Codex for running checks and parsing output. Minimal Claude involvement.
-- **Committer agent:** Already simple enough, possibly Codex-only.
-- **Context7 lookups:** These already use external tools, but prompts could explicitly route through Gemini for summarization.
+**Decision:**
+- **Planner:** Gemini (`mcp__gemini__ask-gemini`) for codebase analysis, file reading, pattern identification, doc lookups. Claude for final plan synthesis only.
+- **TDD:** Claude (no change) - most critical agent, needs production-grade code.
+- **Quality gate:** Claude with `model: "haiku"` - just runs commands and reports pass/fail. No code fixes.
+- **Committer:** Claude with `model: "haiku"` - mechanical git/file operations.
 
-**Approach:** Update agent prompts/instructions to say "use Gemini for X, use Codex for Y" in the agent descriptions or the orchestrator CLAUDE.md.
-
-**Status:** Not started
+**Status:** Done
 
 ---
 
