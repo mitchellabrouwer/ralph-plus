@@ -122,18 +122,9 @@ Each story goes through up to 5 agents sequentially:
 planner ──► tdd ──► e2e (high-risk only) ──► quality-gate ──► committer
 ```
 
-### Failure escalation
+### On failure
 
-When quality-gate or e2e fails, the orchestrator retries with increasing scope:
-
-```
-FAIL
- ├── Retry 1: re-run tdd with failure context, then re-verify
- ├── Retry 2: re-run planner + tdd (new approach), then re-verify
- └── Retry 3: mark story failed in task-<name>.json notes, move to next story
-```
-
-Each retry passes the specific failure details (error output, what check failed) so the agent can make targeted fixes rather than guessing.
+The quality gate fixes mechanical issues (lint, format, typecheck) via Codex internally. If it still fails, the story is marked failed with details in `notes` and the orchestrator moves to the next story. No retries - failed stories need human attention.
 
 ## Setup
 
