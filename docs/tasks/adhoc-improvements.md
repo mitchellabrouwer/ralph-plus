@@ -51,24 +51,16 @@ Standalone improvements to the Ralph+ pipeline that sit outside the normal PRD/s
 
 **Goal:** Audit all prompt text and reduce without losing meaning. Shorter prompts = more room for actual work within the context window.
 
-**Targets:**
-- `scripts/CLAUDE.md` (97 lines of orchestrator instructions)
-- `skills/product-requirement-document/SKILL.md` (294 lines with full example PRD)
-- `skills/tasks/SKILL.md` (158 lines with full JSON template)
-- `skills/architecture/SKILL.md` (112 lines with full template)
-- `skills/git-commit/SKILL.md` (126 lines)
-- `skills/project-init/SKILL.md` (42 lines, already lean)
-- Agent prompts passed through the Task tool by the orchestrator
+**Results:**
+- `scripts/CLAUDE.md`: 130 -> 93 lines (28% reduction)
+- `skills/product-requirement-document/SKILL.md`: 294 -> 60 lines (80% reduction)
+- `skills/tasks/SKILL.md`: 158 -> 54 lines (66% reduction)
+- `skills/git-commit/SKILL.md`: 126 -> 38 lines (70% reduction)
+- `skills/architecture/SKILL.md`: 112 -> 66 lines (41% reduction)
+- `skills/project-init/SKILL.md`: 42 lines (unchanged, already lean)
+- **Total: 862 -> 353 lines (59% reduction)**
 
-**Techniques:**
-- Remove redundant explanations (say it once)
-- Inline examples instead of verbose template sections
-- Use terse bullet lists over paragraphs
-- Remove "Important:" callouts that repeat the same point
-- Compress checklists into single-line rules
-- Consider the AGENTS.md compressed index pattern for any doc references
-
-**Status:** Not started
+**Status:** Done
 
 ---
 

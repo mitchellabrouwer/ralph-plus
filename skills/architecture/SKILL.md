@@ -5,41 +5,11 @@ description: "Create or update a short architecture note for the project. Use wh
 
 # Architecture Note
 
-Keep this short and high signal. One page max.
+One page max. Only include facts verifiable from the codebase. Prefer bullets over paragraphs. If unsure, leave it out.
 
-## AskUserQuestion
+## Before Creating
 
-Use AskUserQuestion to confirm intent before creating the doc. Ask 5 questions with clear options.
-
-1. Architecture style?
-   - Clean architecture
-   - Hexagonal
-   - Layered
-   - Other
-
-2. Project layout preference?
-   - Feature first
-   - Layer first
-   - Monorepo packages
-   - Other
-
-3. Shared types location?
-   - shared/
-   - src/types/
-   - packages/types/
-   - Other
-
-4. Max function length?
-   - 60 lines
-   - 80 lines
-   - 100 lines
-   - No limit
-
-5. Testing focus?
-   - Unit and integration
-   - Unit only
-   - Integration and e2e
-   - E2e for critical flows only
+Use AskUserQuestion to confirm: (1) architecture style - clean/hexagonal/layered, (2) project layout - feature-first/layer-first/monorepo, (3) shared types location, (4) max function length - 60/80/100/no limit, (5) testing focus - unit+integration/unit-only/integration+e2e/e2e-critical-only.
 
 ## Template
 
@@ -54,7 +24,7 @@ One line architecture statement.
 
 ## Project Structure
 - Organized by: feature | layer | other
-- Shared types and pure functions: [path]
+- Shared types: [path]
 - Frontend root: [path]
 - Backend root: [path]
 
@@ -67,28 +37,32 @@ One line architecture statement.
 ## Quick Reference
 | Term | What it is | Location |
 |------|------------|----------|
-| Entity | Type plus pure functions | [path] |
-| Repository | Data access interface plus implementation | [path] |
+| Entity | Type + pure functions | [path] |
+| Repository | Data access interface + impl | [path] |
 | Use case | Orchestration logic | [path] |
-| Handler | Input validation, wiring only | [path] |
+| Handler | Input validation, wiring | [path] |
 | Hook | UI state wrapper | [path] |
 
 ## Dependency Rules
-1. Shared types have zero external dependencies
-2. Use cases depend only on interfaces and shared types
-3. Repository implementations depend on external services
-4. Handlers wire everything together
-5. UI calls use cases, manages view state
+1. Shared types: zero external dependencies
+2. Use cases: depend only on interfaces and shared types
+3. Repositories: depend on external services
+4. Handlers: wire everything together
+5. UI: calls use cases, manages view state
+
+## Anti-patterns
+- External service imports in use cases
+- Duplicated types between frontend/backend
+- Business logic in handlers or UI hooks
+- Mocking external services instead of interfaces
 
 ## Data Fetching
 - Prefer server side filtering
 - Client side filtering only for small data sets
 
-## Anti-patterns
-- Direct external service imports in use cases
-- Duplicated types between frontend and backend
-- Business logic in handlers or UI hooks
-- Mocking external services instead of interfaces
+## Guidelines
+- Shared types live in one place and are reused
+- Keep functions under 100 lines
 
 ## Quality Gates
 | Gate | Command |
@@ -97,15 +71,4 @@ One line architecture statement.
 | Lint | [command or "n/a"] |
 | Format | [command or "n/a"] |
 | Test | [command or "n/a"] |
-
-## Guidelines
-- Shared types live in one place and are reused
-- Use small modules and keep functions under 100 lines
 ```
-
-## Rules
-
-- Only include facts you can verify from the codebase or config.
-- Prefer short bullets over paragraphs.
-- If unsure, leave it out. Do not guess.
-- Keep the document under 100 lines.
