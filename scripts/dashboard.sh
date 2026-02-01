@@ -4,7 +4,7 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TASK_DIR="$SCRIPT_DIR/../docs/tasks"
+TASK_DIR="${TASK_DIR:-$SCRIPT_DIR/../docs/tasks}"
 
 # Colors
 GREEN='\033[0;32m'
@@ -18,11 +18,14 @@ RESET='\033[0m'
 TASK_FILE=""
 
 list_tasks() {
-  ls -1 "$TASK_DIR"/task-*.json 2>/dev/null | xargs -n 1 basename
+  local f
+  for f in "$TASK_DIR"/task-*.json; do
+    [ -e "$f" ] && basename "$f"
+  done
 }
 
 task_count() {
-  ls -1 "$TASK_DIR"/task-*.json 2>/dev/null | wc -l | tr -d ' '
+  list_tasks | wc -l | tr -d ' '
 }
 
 clear_screen() {
@@ -103,9 +106,87 @@ show_overview() {
   echo ""
   printf "  ${DIM}Commands:${RESET}\n"
   printf "  ${CYAN}[1-%d]${RESET} View story details    ${CYAN}[t #]${RESET} Toggle pass/fail\n" "$total"
-  printf "  ${CYAN}[l]${RESET}   Load different task    ${CYAN}[r]${RESET}   Refresh\n"
+  if [ "$(task_count)" -gt 1 ]; then
+    printf "  ${CYAN}[a]${RESET}   All tasks              ${CYAN}[r]${RESET}   Refresh\n"
+  else
+    printf "  ${CYAN}[l]${RESET}   Load different task    ${CYAN}[r]${RESET}   Refresh\n"
+  fi
   printf "  ${CYAN}[q]${RESET}   Quit\n"
   echo ""
+}
+
+show_multi_task_overview() {
+  clear_screen
+
+  echo ""
+  printf "  ${BOLD}"
+  draw_line "=" 45
+  printf "${RESET}"
+  echo ""
+  printf "  ${BOLD}All Tasks${RESET}\n"
+  printf "  ${BOLD}"
+  draw_line "=" 45
+  printf "${RESET}"
+  echo ""
+  echo ""
+
+  TASK_LIST=()
+  local i=1
+  while IFS= read -r task_name; do
+    TASK_LIST+=("$task_name")
+    local task_path="$TASK_DIR/$task_name"
+    local total passing
+    total=$(jq '.userStories | length' "$task_path")
+    passing=$(jq '[.userStories[] | select(.passes == true)] | length' "$task_path")
+
+    local color
+    if [ "$passing" -eq "$total" ]; then
+      color="$GREEN"
+    elif [ "$passing" -eq 0 ]; then
+      color="$RED"
+    else
+      color="$YELLOW"
+    fi
+
+    printf "  ${CYAN}[%d]${RESET} %-30s %b%s/%s passing${RESET}\n" "$i" "$task_name" "$color" "$passing" "$total"
+    i=$((i + 1))
+  done < <(list_tasks)
+
+  if [ "${#TASK_LIST[@]}" -eq 0 ]; then
+    printf "  ${DIM}No tasks found${RESET}\n"
+  fi
+
+  echo ""
+  printf "  ${DIM}"
+  draw_line "-" 45
+  printf "${RESET}"
+  echo ""
+  printf "  ${DIM}Commands:${RESET}\n"
+  printf "  ${CYAN}[1-%d]${RESET} Select task    ${CYAN}[r]${RESET} Refresh    ${CYAN}[q]${RESET} Quit\n" "${#TASK_LIST[@]}"
+  echo ""
+}
+
+multi_task_loop() {
+  while true; do
+    show_multi_task_overview
+    printf "  > "
+    read -r cmd
+
+    # Numeric selection
+    if [[ "$cmd" =~ ^[0-9]+$ ]]; then
+      if [ "$cmd" -ge 1 ] && [ "$cmd" -le "${#TASK_LIST[@]}" ]; then
+        TASK_FILE="$TASK_DIR/${TASK_LIST[$((cmd - 1))]}"
+        main_loop
+      fi
+      continue
+    fi
+
+    case "$cmd" in
+      r|R) continue ;;
+      q|Q) exit 0 ;;
+      *) ;;
+    esac
+  done
 }
 
 show_story() {
@@ -303,6 +384,7 @@ main_loop() {
     fi
 
     case "$cmd" in
+      a|A) return ;;
       l|L)
         clear_screen
         if load_task; then
@@ -317,6 +399,8 @@ main_loop() {
 }
 
 # --- Entry point ---
+
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "Error: jq is required"
@@ -366,8 +450,7 @@ elif [ "$count" -eq 1 ]; then
   TASK_FILE="$TASK_DIR/$(list_tasks)"
   main_loop
 else
-  clear_screen
-  if load_task; then
-    main_loop
-  fi
+  multi_task_loop
+fi
+
 fi
