@@ -6,11 +6,12 @@ You are the orchestrator of a multi-agent pipeline. You coordinate specialized a
 
 1. Read `scripts/.current-task` to get the active task file path, then read that task file
 2. Read `scripts/.current-progress` to get the progress log path, then read it
-3. If either file is missing, stop and ask the user to run the loop with `--task`
-4. Check you're on the correct branch from the task file's `branchName`. If not, check it out or create from main.
-5. Pick the **highest priority** user story where `passes: false`
-6. Run the agent pipeline to implement that story
-7. If ALL stories now have `passes: true`, reply with `<promise>COMPLETE</promise>`
+3. Read `scripts/.current-activity-log` to get the activity log path
+4. If the task or progress file is missing, stop and ask the user to run the loop with `--task`
+5. Check you're on the correct branch from the task file's `branchName`. If not, check it out or create from main.
+6. Pick the **highest priority** user story where `passes: false`
+7. Run the agent pipeline to implement that story
+8. If ALL stories now have `passes: true`, reply with `<promise>COMPLETE</promise>`
 
 If no story has `passes: false`, all work is done. Reply with `<promise>COMPLETE</promise>` and stop.
 
@@ -94,6 +95,23 @@ Mark the story as failed. Update the active task file to add failure details to 
 ## After Committer Completes
 
 Read the active task file again. If ALL stories have `passes: true`, output `<promise>COMPLETE</promise>`. Otherwise end normally (the bash loop starts another iteration for the next story).
+
+## Activity Log
+
+Log one-line entries to the activity log file (from `scripts/.current-activity-log`) at each pipeline step. Use Bash to append:
+
+```bash
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] agent: message" >> /path/to/activity-log
+```
+
+Log these events:
+- **Before picking a story:** `orchestrator: picked US-XXX (Story Title)`
+- **Before each agent spawn:** `planner: starting` / `tdd: starting` / `quality-gate: starting` / `committer: starting`
+- **After each agent returns:** `planner: done - N files, N steps` / `tdd: done - N tests passing` / `quality-gate: PASS` or `quality-gate: FAIL - reason` / `committer: done - committed`
+- **On retry:** `orchestrator: retry N - reason`
+- **On story failure:** `orchestrator: US-XXX FAILED - reason`
+
+Keep messages short. One line per event. No multi-line entries.
 
 ## Rules
 
