@@ -10,8 +10,11 @@ claude 'Use the architect agent to initialize this project'
 claude 'Use the strategist agent to plan [describe your feature]'
 
 # Run it - each story goes through planner -> tdd -> quality-gate -> committer
-./ralph-plus/run-task-loop.sh --task task-<name>.json
+./ralph-plus/run-task-loop.sh --task task-<name>.json        # default: 10 iterations
+./ralph-plus/run-task-loop.sh --task task-<name>.json 5      # custom limit
 ```
+
+Each iteration handles one story. Default is 10 iterations (so up to 10 stories per run).
 
 ## Dashboard
 

@@ -20,7 +20,7 @@ feat | fix | chore | docs | style | refactor | perf | test | build | ci | securi
 
 ## Branch Naming
 
-`work-type/branch-name` always branch off latest main
+`work-type/branch-name` - the orchestrator creates one branch per task from main. All stories commit to that branch.
 
 ```bash
 git add <changed-files> && git commit -m "feat: US-XXX title"

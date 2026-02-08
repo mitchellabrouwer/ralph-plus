@@ -10,6 +10,9 @@ if [ "$TARGET" = "$RALPH_DIR" ]; then
   exit 1
 fi
 
+UPDATE=false
+[ -d "$TARGET/ralph-plus" ] && UPDATE=true
+
 mkdir -p "$TARGET/.claude/agents" "$TARGET/ralph-plus" "$TARGET/docs/tasks"
 
 cp "$RALPH_DIR"/agents/*.md "$TARGET/.claude/agents/"
@@ -26,7 +29,11 @@ else
   echo "Skipped .mcp.json (already exists)"
 fi
 
-echo "Done. Next steps:"
-echo "  1. claude 'Use the architect agent to initialize this project'"
-echo "  2. claude 'Use the strategist agent to plan [your feature]'"
-echo "  3. ./ralph-plus/run-task-loop.sh --task task-<name>.json"
+if [ "$UPDATE" = true ]; then
+  echo "Updated ralph-plus to latest."
+else
+  echo "Done. Next steps:"
+  echo "  1. claude 'Use the architect agent to initialize this project'"
+  echo "  2. claude 'Use the strategist agent to plan [your feature]'"
+  echo "  3. ./ralph-plus/run-task-loop.sh --task task-<name>.json"
+fi
