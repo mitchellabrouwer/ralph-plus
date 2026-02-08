@@ -2,21 +2,38 @@
 
 A multi-agent pipeline for autonomous feature implementation using TDD.
 
+## Quick Start
+
+```bash
+# 1. Setup - copy agents, scripts, and MCP config into your project
+path/to/ralph-plus/setup.sh /path/to/your-project
+
+# 2. Initialize architecture (once per project)
+claude 'Use the architect agent to initialize this project'
+
+# 3. Create a task - strategist researches your codebase and asks you questions
+claude 'Use the strategist agent to plan [describe your feature]'
+
+# 4. Run it - each story goes through planner -> tdd -> quality-gate -> committer
+./scripts/run-task-loop.sh --task task-<name>.json
+```
+
+You focus on step 3 (describing the feature, answering questions, reviewing stories). Everything after that is autonomous.
+
 ## Concepts
 
 Think of Ralph+ like a golf team.
 
 **🏌️ Players (Agents)** - Each player has a specific role on the team. The strategist reads the course. The planner picks the shot. The tdd player executes. They know their job, but they don't all need the same equipment or training.
 
-**📋 Training (Skills)** - Techniques a player can draw on when the situation calls for it. A player might choose between different approaches depending on the lie - deep research vs shallow research, different testing strategies. Multiple players can share the same training. Skills are switchable: the agent reads the one that fits the situation.
-
 **🏑 Clubs (MCPs)** - Different clubs for different shots. You wouldn't putt with a driver. Each player's bag only has the clubs they need. The strategist carries research clubs (Codex, Gemini, Context7). The e2e player carries the Playwright set. The quality-gate carries nothing - it just reads the scorecard.
 
 |     | Concept  | Directory   | What it is                                    |
 | --- | -------- | ----------- | --------------------------------------------- |
 | 🏌️  | Players  | `agents/`   | Agent definitions - who does what             |
-| 📋  | Training | `skills/`   | Methodology and techniques agents can draw on |
 | 🏑  | Clubs    | `.mcp.json` | External tools (AI models, browser, docs)     |
+
+> **Note:** This project favors agents over skills. Agents allow finer control - you can specify the model (opus, sonnet, haiku) and exactly which MCP tools each agent has access to. Skills don't have this level of configuration.
 
 ## The Team
 
@@ -130,44 +147,45 @@ The quality gate fixes mechanical issues (lint, format, typecheck) via Codex int
 
 ### This repo (development)
 
-In ralph-plus itself, `.claude/agents/` and `.claude/skills/` are symlinked to `agents/` and `skills/` so edits propagate automatically:
+In ralph-plus itself, `.claude/agents/` is symlinked to `agents/` so edits propagate automatically:
 
 ```bash
 # Already set up - symlinks point like this:
 .claude/agents/strategist.md -> ../../agents/strategist.md
-.claude/skills/architecture   -> ../../skills/architecture/
 ```
 
-### Other projects
+### Other projects (quick setup)
 
-Copy agents, skills, and scripts into your project:
+Copy agents, scripts, and MCP config into your project:
 
 ```bash
-mkdir -p .claude/agents .claude/skills
-cp path/to/ralph-plus/agents/*.md .claude/agents/
-cp -r path/to/ralph-plus/skills/* .claude/skills/
-cp -r path/to/ralph-plus/scripts .
+path/to/ralph-plus/setup.sh .
 ```
+
+Or manually:
+
+```bash
+mkdir -p .claude/agents scripts docs/tasks
+cp path/to/ralph-plus/agents/*.md .claude/agents/
+cp path/to/ralph-plus/scripts/{run-task-loop.sh,dashboard.sh,CLAUDE.md} scripts/
+cp path/to/ralph-plus/.mcp.json .
+```
+
+Then:
+
+1. **Initialize architecture** - run the architect agent to create `docs/architecture.md` with your project's quality gates
+2. **Create your first task** - describe a feature to the strategist agent, or write a PRD markdown in `docs/tasks/` and convert it to `task-<name>.json`
+3. **Run the loop** - `./scripts/run-task-loop.sh --task task-<name>.json`
 
 ### Third-party skills (npx skills add)
 
-[`npx skills add`](https://github.com/vercel-labs/agent-skills) installs community skills into `.agents/`. These are separate from the custom `agents/` and `skills/` directories in this repo.
+[`npx skills add`](https://github.com/vercel-labs/agent-skills) installs community skills into `.agents/`. These are separate from the `agents/` and `skills/` directories in this repo.
 
 ```bash
-# Install a skill from GitHub
-npx skills add vercel-labs/agent-skills
-
-# Install specific skills
-npx skills add vercel-labs/agent-skills --skill frontend-design
-
-# Install from a local path
-npx skills add ./my-local-skills
-
-# List available skills in a repo
-npx skills add vercel-labs/agent-skills --list
+npx skills add vercel-labs/agent-skills --skill test-driven-development
 ```
 
-Installed skills land in `.agents/skills/` and are symlinked into `.claude/skills/` automatically. See the [npx skills docs](https://github.com/vercel-labs/agent-skills) for all options (`--global`, `--agent`, `--skill`, `--all`, etc).
+Installed skills land in `.agents/skills/` and can be symlinked into `.claude/skills/`. See the [npx skills docs](https://github.com/vercel-labs/agent-skills) for all options.
 
 ### MCPs
 
@@ -185,18 +203,15 @@ Configure the MCP servers your agents need in your project's `.mcp.json`. See `.
 | Location                         | Purpose                                                                                   |
 | -------------------------------- | ----------------------------------------------------------------------------------------- |
 | `agents/`                        | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
-| `skills/`                        | 📋 Reference materials (testing-anti-patterns)                                            |
-| `.agents/`                       | 📦 Third-party skills installed via `npx skills add`                                      |
 | `.claude/agents/`                | Symlinks to `agents/` (consumed by Claude Code)                                           |
-| `.claude/skills/`                | Symlinks to `skills/` and `.agents/skills/` (consumed by Claude Code)                     |
 | `scripts/run-task-loop.sh`       | Bash loop that runs one story per iteration                                               |
 | `scripts/CLAUDE.md`              | Orchestrator prompt (coordinates the agents)                                              |
+| `scripts/dashboard.sh`           | Interactive task dashboard                                                                |
 | `docs/tasks/`                    | Task files and progress logs                                                              |
 | `docs/tasks/task-<name>.json`    | Stories with pass/fail status (created by strategist)                                     |
 | `docs/tasks/progress-<name>.txt` | Append-only learnings log (created at runtime)                                            |
-| `docs/architecture.md`           | Short architecture notes shared across tasks                                              |
-| `scripts/dashboard.sh`           | Interactive task dashboard                                                                |
-| `docs/reference/ralph/`          | Legacy Ralph reference (original single agent flow)                                       |
+| `docs/architecture.md`           | Project architecture and quality gates (shared across tasks)                              |
+| `docs/reference/`                | Legacy Ralph reference (original single-agent flow)                                       |
 
 ## Credits
 

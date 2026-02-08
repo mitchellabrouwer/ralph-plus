@@ -16,7 +16,7 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Violating the letter of the rules is violating the spirit of the rules.**
 
-If you need to add mocks read @skills/testing-anti-patterns.md
+Avoid common testing anti-patterns: don't test mock behavior instead of real code, don't add test-only methods to production code, don't mock what you don't understand.
 
 ## When to Use
 
