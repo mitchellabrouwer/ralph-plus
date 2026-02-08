@@ -132,7 +132,7 @@ show_log() {
   echo ""
 
   if [ -f "$activity_log" ]; then
-    tail -20 "$activity_log" | while IFS= read -r line; do
+    head -20 "$activity_log" | while IFS= read -r line; do
       printf "  ${DIM}%s${RESET}\n" "$line"
     done
   else

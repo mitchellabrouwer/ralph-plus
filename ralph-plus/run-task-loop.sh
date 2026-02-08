@@ -88,8 +88,18 @@ echo "$TASK_FILE" > "$CURRENT_TASK_FILE"
 echo "$PROGRESS_FILE" > "$CURRENT_PROGRESS_FILE"
 echo "$ACTIVITY_LOG" > "$CURRENT_ACTIVITY_FILE"
 
+prepend_log() {
+  local tmp
+  tmp=$(mktemp)
+  if [ -f "$ACTIVITY_LOG" ]; then
+    { echo "$1"; cat "$ACTIVITY_LOG"; } > "$tmp" && mv "$tmp" "$ACTIVITY_LOG"
+  else
+    echo "$1" > "$ACTIVITY_LOG"
+  fi
+}
+
 # Initialize activity log
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: started task=$TASK_BASENAME max_iterations=$MAX_ITERATIONS" >> "$ACTIVITY_LOG"
+prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: started task=$TASK_BASENAME max_iterations=$MAX_ITERATIONS"
 
 # Initialize progress file if missing
 if [ ! -f "$PROGRESS_FILE" ]; then
@@ -108,20 +118,20 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo "==============================================================="
 
   echo "$i/$MAX_ITERATIONS" > "$CURRENT_ITERATION_FILE"
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS started" >> "$ACTIVITY_LOG"
+  prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS started"
 
   OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
 
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: COMPLETE at iteration $i/$MAX_ITERATIONS" >> "$ACTIVITY_LOG"
+    prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: COMPLETE at iteration $i/$MAX_ITERATIONS"
     echo ""
     echo "Ralph+ completed all tasks!"
     echo "Completed at iteration $i of $MAX_ITERATIONS"
     exit 0
   fi
 
-  echo "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS finished" >> "$ACTIVITY_LOG"
+  prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS finished"
   echo "Iteration $i complete. Continuing..."
   sleep 2
 done

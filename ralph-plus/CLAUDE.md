@@ -64,8 +64,10 @@ Re-read task file. All `passes: true`? Output `<promise>COMPLETE</promise>`. Oth
 
 Append one-line entries to the activity log at each step:
 
+Prepend (newest first) one-line entries using this pattern:
+
 ```bash
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] US-XXX agent: message" >> /path/to/activity-log
+tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] US-XXX agent: message"; cat /path/to/activity-log; } > "$tmp" && mv "$tmp" /path/to/activity-log
 ```
 
 Include the iteration from `.current-iteration` and the current story ID in every log entry.
