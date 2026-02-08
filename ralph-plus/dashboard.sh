@@ -106,13 +106,60 @@ show_overview() {
   echo ""
   printf "  ${DIM}Commands:${RESET}\n"
   printf "  ${CYAN}[1-%d]${RESET} View story details    ${CYAN}[t #]${RESET} Toggle pass/fail\n" "$total"
+  printf "  ${CYAN}[g]${RESET}   Activity log           ${CYAN}[r]${RESET}   Refresh\n"
   if [ "$(task_count)" -gt 1 ]; then
-    printf "  ${CYAN}[a]${RESET}   All tasks              ${CYAN}[r]${RESET}   Refresh\n"
+    printf "  ${CYAN}[a]${RESET}   All tasks              ${CYAN}[q]${RESET}   Quit\n"
   else
-    printf "  ${CYAN}[l]${RESET}   Load different task    ${CYAN}[r]${RESET}   Refresh\n"
+    printf "  ${CYAN}[l]${RESET}   Load different task    ${CYAN}[q]${RESET}   Quit\n"
   fi
-  printf "  ${CYAN}[q]${RESET}   Quit\n"
   echo ""
+}
+
+show_log() {
+  clear_screen
+
+  local task_basename task_slug activity_log
+  task_basename=$(basename "$TASK_FILE")
+  task_slug="${task_basename#task-}"
+  task_slug="${task_slug%.json}"
+  activity_log="$TASK_DIR/activity-$task_slug.log"
+
+  echo ""
+  printf "  ${BOLD}Activity Log${RESET} ${DIM}($task_basename)${RESET}\n"
+  printf "  ${BOLD}"
+  draw_line "─" 45
+  printf "${RESET}"
+  echo ""
+
+  if [ -f "$activity_log" ]; then
+    tail -20 "$activity_log" | while IFS= read -r line; do
+      printf "  ${DIM}%s${RESET}\n" "$line"
+    done
+  else
+    printf "  ${DIM}No activity log yet.${RESET}\n"
+  fi
+
+  echo ""
+  printf "  ${DIM}"
+  draw_line "─" 45
+  printf "${RESET}"
+  echo ""
+  printf "  ${CYAN}[b]${RESET} Back  ${CYAN}[r]${RESET} Refresh\n"
+  echo ""
+}
+
+log_loop() {
+  while true; do
+    show_log
+    printf "  > "
+    read -r cmd
+    case "$cmd" in
+      b|B) return ;;
+      r|R) continue ;;
+      q|Q) exit 0 ;;
+      *) ;;
+    esac
+  done
 }
 
 show_multi_task_overview() {
@@ -385,6 +432,7 @@ main_loop() {
 
     case "$cmd" in
       a|A) return ;;
+      g|G) log_loop ;;
       l|L)
         clear_screen
         if load_task; then
