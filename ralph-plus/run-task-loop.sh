@@ -9,6 +9,7 @@ TASK_DIR="$SCRIPT_DIR/../docs/tasks"
 CURRENT_TASK_FILE="$SCRIPT_DIR/.current-task"
 CURRENT_PROGRESS_FILE="$SCRIPT_DIR/.current-progress"
 CURRENT_ACTIVITY_FILE="$SCRIPT_DIR/.current-activity-log"
+CURRENT_ITERATION_FILE="$SCRIPT_DIR/.current-iteration"
 
 TASK_NAME=""
 MAX_ITERATIONS=10
@@ -106,6 +107,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo "  Ralph+ Iteration $i of $MAX_ITERATIONS"
   echo "==============================================================="
 
+  echo "$i/$MAX_ITERATIONS" > "$CURRENT_ITERATION_FILE"
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS started" >> "$ACTIVITY_LOG"
 
   OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true

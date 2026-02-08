@@ -7,11 +7,12 @@ You coordinate a multi-agent pipeline. One user story per iteration.
 1. Read `ralph-plus/.current-task` -> get task file path -> read task file
 2. Read `ralph-plus/.current-progress` -> get progress log path -> read it
 3. Read `ralph-plus/.current-activity-log` -> get activity log path
-4. If task or progress file missing, stop and ask user to run with `--task`
-5. Check correct branch (task file `branchName`). Create from main if needed.
-6. Pick highest priority story where `passes: false`
-7. Run the pipeline below
-8. If ALL stories `passes: true`, reply `<promise>COMPLETE</promise>`
+4. Read `ralph-plus/.current-iteration` -> get iteration (e.g. `3/10`)
+5. If task or progress file missing, stop and ask user to run with `--task`
+6. Check correct branch (task file `branchName`). Create from main if needed.
+7. Pick highest priority story where `passes: false`
+8. Run the pipeline below
+9. If ALL stories `passes: true`, reply `<promise>COMPLETE</promise>`
 
 No story with `passes: false`? Reply `<promise>COMPLETE</promise>` and stop.
 
@@ -64,8 +65,10 @@ Re-read task file. All `passes: true`? Output `<promise>COMPLETE</promise>`. Oth
 Append one-line entries to the activity log at each step:
 
 ```bash
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] agent: message" >> /path/to/activity-log
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] agent: message" >> /path/to/activity-log
 ```
+
+Include the iteration from `.current-iteration` in every log entry (e.g. `[3/10]`).
 
 Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` | `committer: done` | `orchestrator: US-XXX FAILED - reason`
 
