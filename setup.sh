@@ -16,6 +16,7 @@ cp "$RALPH_DIR"/agents/*.md "$TARGET/.claude/agents/"
 cp "$RALPH_DIR"/ralph-plus/run-task-loop.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/dashboard.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/CLAUDE.md "$TARGET/ralph-plus/"
+cp "$RALPH_DIR"/ralph-plus/HOW-TO.md "$TARGET/ralph-plus/"
 
 # Only copy MCP config if one doesn't already exist
 if [ ! -f "$TARGET/.mcp.json" ]; then
