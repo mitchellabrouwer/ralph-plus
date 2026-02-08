@@ -2,11 +2,11 @@
 set -e
 
 RALPH_DIR="$(cd "$(dirname "$0")" && pwd)"
-TARGET="${1:-.}"
+TARGET="$(pwd)"
 
-if [ "$TARGET" = "." ] || [ "$(cd "$TARGET" && pwd)" = "$RALPH_DIR" ]; then
-  echo "Usage: path/to/ralph-plus/setup.sh <target-project>"
-  echo "  Copies agents, scripts, and MCP config into your project."
+if [ "$TARGET" = "$RALPH_DIR" ]; then
+  echo "Run this from your target project, not from ralph-plus itself."
+  echo "  cd /path/to/my-project && path/to/ralph-plus/setup.sh"
   exit 1
 fi
 

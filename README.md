@@ -156,20 +156,13 @@ In ralph-plus itself, `.claude/agents/` is symlinked to `agents/` so edits propa
 
 ### Other projects (quick setup)
 
-Copy agents, scripts, and MCP config into your project:
-
 ```bash
-path/to/ralph-plus/setup.sh .
+git clone https://github.com/mitchellabrouwer/ralph-plus.git
+cd my-project
+path/to/ralph-plus/setup.sh
 ```
 
-Or manually:
-
-```bash
-mkdir -p .claude/agents scripts docs/tasks
-cp path/to/ralph-plus/agents/*.md .claude/agents/
-cp path/to/ralph-plus/scripts/{run-task-loop.sh,dashboard.sh,CLAUDE.md} scripts/
-cp path/to/ralph-plus/.mcp.json .
-```
+The script copies agents, scripts, and MCP config into the current directory.
 
 Then:
 
