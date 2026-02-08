@@ -5,7 +5,7 @@ A multi-agent pipeline for autonomous feature implementation using TDD.
 ## Quick Start
 
 ```bash
-# 1. Setup - copy agents, scripts, and MCP config into your project
+# 1. Setup - copy agents and ralph-plus into your project
 path/to/ralph-plus/setup.sh /path/to/your-project
 
 # 2. Initialize architecture (once per project)
@@ -15,7 +15,7 @@ claude 'Use the architect agent to initialize this project'
 claude 'Use the strategist agent to plan [describe your feature]'
 
 # 4. Run it - each story goes through planner -> tdd -> quality-gate -> committer
-./scripts/run-task-loop.sh --task task-<name>.json
+./ralph-plus/run-task-loop.sh --task task-<name>.json
 ```
 
 You focus on step 3 (describing the feature, answering questions, reviewing stories). Everything after that is autonomous.
@@ -109,14 +109,14 @@ Check that stories are small enough (one context window each), ordered by depend
 ### Step 2.5: View tasks in the dashboard
 
 ```bash
-./scripts/dashboard.sh --list
-./scripts/dashboard.sh task-<name>.json
+./ralph-plus/dashboard.sh --list
+./ralph-plus/dashboard.sh task-<name>.json
 ```
 
 ### Step 3: Run the loop
 
 ```bash
-./scripts/run-task-loop.sh --task task-<name>.json [max_iterations]
+./ralph-plus/run-task-loop.sh --task task-<name>.json [max_iterations]
 ```
 
 Default is 10 iterations. Each iteration implements one story. The script:
@@ -162,13 +162,13 @@ cd my-project
 path/to/ralph-plus/setup.sh
 ```
 
-The script copies agents, scripts, and MCP config into the current directory.
+The script copies agents, orchestrator scripts, and MCP config into the current directory.
 
 Then:
 
 1. **Initialize architecture** - run the architect agent to create `docs/architecture.md` with your project's quality gates
 2. **Create your first task** - describe a feature to the strategist agent, or write a PRD markdown in `docs/tasks/` and convert it to `task-<name>.json`
-3. **Run the loop** - `./scripts/run-task-loop.sh --task task-<name>.json`
+3. **Run the loop** - `./ralph-plus/run-task-loop.sh --task task-<name>.json`
 
 ### Third-party skills (npx skills add)
 
@@ -197,9 +197,9 @@ Configure the MCP servers your agents need in your project's `.mcp.json`. See `.
 | -------------------------------- | ----------------------------------------------------------------------------------------- |
 | `agents/`                        | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
 | `.claude/agents/`                | Symlinks to `agents/` (consumed by Claude Code)                                           |
-| `scripts/run-task-loop.sh`       | Bash loop that runs one story per iteration                                               |
-| `scripts/CLAUDE.md`              | Orchestrator prompt (coordinates the agents)                                              |
-| `scripts/dashboard.sh`           | Interactive task dashboard                                                                |
+| `ralph-plus/run-task-loop.sh`       | Bash loop that runs one story per iteration                                               |
+| `ralph-plus/CLAUDE.md`              | Orchestrator prompt (coordinates the agents)                                              |
+| `ralph-plus/dashboard.sh`           | Interactive task dashboard                                                                |
 | `docs/tasks/`                    | Task files and progress logs                                                              |
 | `docs/tasks/task-<name>.json`    | Stories with pass/fail status (created by strategist)                                     |
 | `docs/tasks/progress-<name>.txt` | Append-only learnings log (created at runtime)                                            |

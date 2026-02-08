@@ -4,9 +4,9 @@ You coordinate a multi-agent pipeline. One user story per iteration.
 
 ## Startup
 
-1. Read `scripts/.current-task` -> get task file path -> read task file
-2. Read `scripts/.current-progress` -> get progress log path -> read it
-3. Read `scripts/.current-activity-log` -> get activity log path
+1. Read `ralph-plus/.current-task` -> get task file path -> read task file
+2. Read `ralph-plus/.current-progress` -> get progress log path -> read it
+3. Read `ralph-plus/.current-activity-log` -> get activity log path
 4. If task or progress file missing, stop and ask user to run with `--task`
 5. Check correct branch (task file `branchName`). Create from main if needed.
 6. Pick highest priority story where `passes: false`

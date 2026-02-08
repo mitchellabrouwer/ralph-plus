@@ -28,7 +28,7 @@ git add <changed-files> && git commit -m "feat: US-XXX title"
 
 ### 2. Update and commit the active task file
 
-Read `scripts/.current-task` to get the PRD path. Update that file: find the story by ID, set `passes: true`.
+Read `ralph-plus/.current-task` to get the PRD path. Update that file: find the story by ID, set `passes: true`.
 
 ```bash
 git add <task-file> && git commit -m "chore: mark US-XXX as passing"
@@ -36,7 +36,7 @@ git add <task-file> && git commit -m "chore: mark US-XXX as passing"
 
 ### 3. Update and commit Progress Log
 
-Read `scripts/.current-progress` to get the progress log path. Append to that file:
+Read `ralph-plus/.current-progress` to get the progress log path. Append to that file:
 
 ```
 ## [Date] - [Story ID]: [Story Title]
@@ -66,4 +66,4 @@ git add <claude-md> && git commit -m "chore: update CLAUDE.md"
 ## Rules
 
 - Keep commits atomic: implementation separate from tracking updates
-- NEVER commit `.env*`, credentials (`*.key`, `*.pem`, `credentials.json`), `scripts/tmp/`, `node_modules/`, build artifacts (`dist/`, `.next/`, `build/`), OS files (`.DS_Store`, `Thumbs.db`). Add to `.gitignore` if not listed.
+- NEVER commit `.env*`, credentials (`*.key`, `*.pem`, `credentials.json`), `ralph-plus/tmp/`, `node_modules/`, build artifacts (`dist/`, `.next/`, `build/`), OS files (`.DS_Store`, `Thumbs.db`). Add to `.gitignore` if not listed.

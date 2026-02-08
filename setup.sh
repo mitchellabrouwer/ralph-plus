@@ -10,12 +10,12 @@ if [ "$TARGET" = "$RALPH_DIR" ]; then
   exit 1
 fi
 
-mkdir -p "$TARGET/.claude/agents" "$TARGET/scripts" "$TARGET/docs/tasks"
+mkdir -p "$TARGET/.claude/agents" "$TARGET/ralph-plus" "$TARGET/docs/tasks"
 
 cp "$RALPH_DIR"/agents/*.md "$TARGET/.claude/agents/"
-cp "$RALPH_DIR"/scripts/run-task-loop.sh "$TARGET/scripts/"
-cp "$RALPH_DIR"/scripts/dashboard.sh "$TARGET/scripts/"
-cp "$RALPH_DIR"/scripts/CLAUDE.md "$TARGET/scripts/"
+cp "$RALPH_DIR"/ralph-plus/run-task-loop.sh "$TARGET/ralph-plus/"
+cp "$RALPH_DIR"/ralph-plus/dashboard.sh "$TARGET/ralph-plus/"
+cp "$RALPH_DIR"/ralph-plus/CLAUDE.md "$TARGET/ralph-plus/"
 
 # Only copy MCP config if one doesn't already exist
 if [ ! -f "$TARGET/.mcp.json" ]; then
@@ -28,4 +28,4 @@ fi
 echo "Done. Next steps:"
 echo "  1. claude 'Use the architect agent to initialize this project'"
 echo "  2. claude 'Use the strategist agent to plan [your feature]'"
-echo "  3. ./scripts/run-task-loop.sh --task task-<name>.json"
+echo "  3. ./ralph-plus/run-task-loop.sh --task task-<name>.json"
