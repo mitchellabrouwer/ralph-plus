@@ -65,12 +65,12 @@ Re-read task file. All `passes: true`? Output `<promise>COMPLETE</promise>`. Oth
 Append one-line entries to the activity log at each step:
 
 ```bash
-echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] agent: message" >> /path/to/activity-log
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] US-XXX agent: message" >> /path/to/activity-log
 ```
 
-Include the iteration from `.current-iteration` in every log entry (e.g. `[3/10]`).
+Include the iteration from `.current-iteration` and the current story ID in every log entry.
 
-Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` | `committer: done` | `orchestrator: US-XXX FAILED - reason`
+Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` | `committer: done` | `orchestrator: FAILED - reason`
 
 ## Rules
 
