@@ -8,13 +8,14 @@ You coordinate a multi-agent pipeline. One user story per iteration.
 2. Read `ralph-plus/.current-progress` -> get progress log path -> read it
 3. Read `ralph-plus/.current-activity-log` -> get activity log path
 4. Read `ralph-plus/.current-iteration` -> get iteration (e.g. `3/10`)
-5. If task or progress file missing, stop and ask user to run with `--task`
-6. Check correct branch (task file `branchName`). Create from main if needed.
-7. Pick highest priority story where `passes: false`
-8. Run the pipeline below
-9. If ALL stories `passes: true`, reply `<promise>COMPLETE</promise>`
+5. Read `docs/tasks/LEARNINGS.md` if it exists (accumulated patterns from past tasks)
+6. If task or progress file missing, stop and ask user to run with `--task`
+7. Check correct branch (task file `branchName`). Create from main if needed.
+8. Pick highest priority story where `passes: false`
+9. Run the pipeline below
+10. If ALL stories `passes: true`, run the **Archive** step below then reply `<promise>COMPLETE</promise>`
 
-No story with `passes: false`? Reply `<promise>COMPLETE</promise>` and stop.
+No story with `passes: false`? Run the **Archive** step below then reply `<promise>COMPLETE</promise>` and stop.
 
 ## Pipeline
 
@@ -58,7 +59,23 @@ No retries. The quality gate already attempted mechanical fixes internally. If i
 
 ## After Committer
 
-Re-read task file. All `passes: true`? Output `<promise>COMPLETE</promise>`. Otherwise end normally.
+Re-read task file. All `passes: true`? Run the **Archive** step then output `<promise>COMPLETE</promise>`. Otherwise end normally.
+
+## Archive
+
+Run this when all stories pass, before outputting `<promise>COMPLETE</promise>`.
+
+1. Read the progress file's `## Codebase Patterns` section
+2. Append it to `docs/tasks/LEARNINGS.md` under a heading with the task name and date:
+   ```
+   ## task-slug-name (YYYY-MM-DD)
+   <patterns from progress file>
+   ```
+   If `LEARNINGS.md` doesn't exist, create it with a `# Codebase Learnings` title first.
+3. Create `docs/tasks/completed/` if it doesn't exist
+4. Move this task's specific files into it: `task-<slug>.json`, `prd-<slug>.md`, `progress-<slug>.txt`, `activity-<slug>.log`
+5. Log the archive to the activity log before moving it: `orchestrator: archived task to completed/`
+6. Commit the archive (learnings update + moved files) with message: `chore: archive completed task <slug>`
 
 ## Activity Log
 
@@ -79,4 +96,4 @@ Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: 
 - One story per iteration, agents sequential
 - Pass context via Task tool prompts, no temp files
 - Never modify code yourself
-- Read Codebase Patterns from progress log before starting
+- Read Codebase Patterns from both `docs/tasks/LEARNINGS.md` and the current progress log before starting
