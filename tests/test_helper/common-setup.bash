@@ -12,6 +12,8 @@ setup_dashboard() {
   source "$DASHBOARD"
   # Override TASK_DIR after sourcing (source sets it from SCRIPT_DIR)
   TASK_DIR="$FIXTURES_DIR"
+  SEL_MAIN=0
+  SEL_MULTI=0
 }
 
 # Strip ANSI color codes from output for easier assertions

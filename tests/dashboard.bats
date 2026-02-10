@@ -52,9 +52,10 @@ setup() {
 }
 
 @test "show_multi_task_overview color codes partial as yellow" {
+  SEL_MULTI=1
   run show_multi_task_overview
   [ "$status" -eq 0 ]
-  # alpha is partial (2/3) - should have yellow ANSI code
+  # alpha is partial (2/3) - should have yellow ANSI code (not selected)
   local alpha_line
   alpha_line=$(echo "$output" | grep "task-alpha.json")
   echo "$alpha_line" | grep -q $'\033\[0;33m'
@@ -103,10 +104,10 @@ setup() {
   echo "$stripped" | grep -q "task-gamma.json"
 }
 
-@test "selecting task number enters story overview" {
-  # Select task 2 (beta), then quit
+@test "selecting task enters story overview" {
+  # j to move down, l to open (beta), q to quit
   local input
-  input=$(printf "2\nq\n")
+  input=$(printf 'jlq')
   run bash -c "TASK_DIR='$FIXTURES_DIR' bash '$DASHBOARD' <<< '$input'"
   [ "$status" -eq 0 ]
   local stripped
@@ -116,15 +117,15 @@ setup() {
   echo "$stripped" | grep -q "stories passing"
 }
 
-@test "pressing a returns to multi-task overview from story overview" {
-  # Select task 1 (alpha), press 'a' to go back, then quit
+@test "pressing h returns to multi-task overview from story overview" {
+  # l to open first task (alpha), h to go back, q to quit
   local input
-  input=$(printf "1\na\nq\n")
+  input=$(printf 'lhq')
   run bash -c "TASK_DIR='$FIXTURES_DIR' bash '$DASHBOARD' <<< '$input'"
   [ "$status" -eq 0 ]
   local stripped
   stripped=$(echo "$output" | strip_colors)
-  # Should show All Tasks screen again after pressing 'a'
+  # Should show All Tasks screen again after pressing 'h'
   # The output should contain "All Tasks" at least twice (initial + return)
   local count
   count=$(echo "$stripped" | grep -c "All Tasks")
@@ -167,11 +168,160 @@ setup() {
   echo "$output" | grep -q "task-gamma.json"
 }
 
-@test "show_overview shows all tasks command when multiple tasks exist" {
+@test "show_overview shows back command when multiple tasks exist" {
   TASK_FILE="$FIXTURES_DIR/task-alpha.json"
   run show_overview
   [ "$status" -eq 0 ]
   local stripped
   stripped=$(echo "$output" | strip_colors)
-  echo "$stripped" | grep -q "All tasks"
+  echo "$stripped" | grep -qi "back"
+}
+
+# --- Pipeline status tests ---
+
+@test "get_pipeline_status parses story and agent from activity log" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  get_pipeline_status
+  [ "$PIPELINE_STORY" = "US-001" ]
+  [ "$PIPELINE_AGENT" = "tdd" ]
+  [ "$PIPELINE_MESSAGE" = "starting" ]
+}
+
+@test "get_pipeline_status extracts iteration from log entry" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  get_pipeline_status
+  [ "$PIPELINE_ITERATION" = "1/10" ]
+}
+
+@test "get_pipeline_status marks old entries as inactive" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  # Fixture has 2025 timestamps, well past 5 minutes
+  get_pipeline_status
+  [ "$PIPELINE_ACTIVE" = false ]
+}
+
+@test "get_pipeline_status handles missing activity log" {
+  TASK_FILE="$FIXTURES_DIR/task-gamma.json"
+  get_pipeline_status
+  [ "$PIPELINE_ACTIVE" = false ]
+  [ -z "$PIPELINE_STORY" ]
+}
+
+@test "draw_status_bar outputs nothing when no pipeline data" {
+  PIPELINE_STORY=""
+  run draw_status_bar
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+@test "draw_status_bar shows IDLE for inactive pipeline" {
+  PIPELINE_ACTIVE=false
+  PIPELINE_STORY="US-001"
+  PIPELINE_AGENT="tdd"
+  PIPELINE_MESSAGE="starting"
+  PIPELINE_ITERATION="1/10"
+  PIPELINE_AGO="2h ago"
+  run draw_status_bar
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "IDLE"
+  echo "$stripped" | grep -q "Iteration 1/10"
+  echo "$stripped" | grep -q "US-001 tdd: starting"
+}
+
+# --- Progress bar tests ---
+
+@test "draw_progress_bar shows correct fill for partial progress" {
+  run draw_progress_bar 2 3
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "2/3"
+  # Should contain both filled and empty chars
+  echo "$stripped" | grep -q "█"
+  echo "$stripped" | grep -q "░"
+}
+
+@test "draw_progress_bar all green when complete" {
+  run draw_progress_bar 3 3
+  [ "$status" -eq 0 ]
+  # Should use green color code
+  echo "$output" | grep -q $'\033\[0;32m'
+}
+
+@test "draw_progress_bar all red when zero" {
+  run draw_progress_bar 0 4
+  [ "$status" -eq 0 ]
+  # Should use red color code
+  echo "$output" | grep -q $'\033\[0;31m'
+}
+
+# --- Activity feed tests ---
+
+@test "draw_activity_feed shows recent entries" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run draw_activity_feed
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "Recent Activity"
+  echo "$stripped" | grep -q "12:22:20"
+  echo "$stripped" | grep -q "tdd: starting"
+}
+
+@test "draw_activity_feed strips date portion" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run draw_activity_feed
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  # Should NOT contain the date portion
+  ! echo "$stripped" | grep -q "2025-06-15"
+}
+
+@test "draw_activity_feed outputs nothing with no log file" {
+  TASK_FILE="$FIXTURES_DIR/task-gamma.json"
+  run draw_activity_feed
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
+}
+
+# --- Show overview new features ---
+
+@test "show_overview shows percentage" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_overview
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "66%"
+}
+
+@test "show_overview shows progress bar" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_overview
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "█"
+}
+
+@test "show_overview includes activity feed" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_overview
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "Recent Activity"
+}
+
+@test "show_overview uses dim bullet for non-passing non-active stories" {
+  TASK_FILE="$FIXTURES_DIR/task-gamma.json"
+  SEL_MAIN=1
+  run show_overview
+  [ "$status" -eq 0 ]
+  # gamma has no activity log so pipeline is not active
+  # US-001 is not selected (SEL_MAIN=1), should use DIM color (\033[2m)
+  echo "$output" | grep "US-001" | grep -q $'\033\[2m'
 }
