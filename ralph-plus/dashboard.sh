@@ -45,7 +45,11 @@ task_count() {
 }
 
 clear_screen() {
-  printf '\033[2J\033[H'
+  printf '\033[H\033[?25l'
+}
+
+finish_draw() {
+  printf '\033[J\033[?25h'
 }
 
 draw_line() {
@@ -326,11 +330,12 @@ show_overview() {
   printf "${RESET}"
   echo ""
   if [ "$(task_count)" -gt 1 ]; then
-    printf "  j/k navigate  l/Enter open  t toggle  g log  h/Esc back  q quit\n"
+    printf "  j/k/arrows navigate  l/Enter open  t toggle  g log  h/Esc back  q quit\n"
   else
-    printf "  j/k navigate  l/Enter open  t toggle  g log  q quit\n"
+    printf "  j/k/arrows navigate  l/Enter open  t toggle  g log  q quit\n"
   fi
   echo ""
+  finish_draw
 }
 
 show_log() {
@@ -362,6 +367,7 @@ show_log() {
   echo ""
   printf "  h/Esc back  r refresh\n"
   echo ""
+  finish_draw
 }
 
 log_loop() {
@@ -439,8 +445,9 @@ show_multi_task_overview() {
   draw_line
   printf "${RESET}"
   echo ""
-  printf "  j/k navigate  l/Enter open  r refresh  q quit\n"
+  printf "  j/k/arrows navigate  l/Enter open  r refresh  q quit\n"
   echo ""
+  finish_draw
 }
 
 multi_task_loop() {
@@ -547,6 +554,7 @@ show_story() {
   echo ""
   printf "  h/Esc back  t toggle  n edit notes  q quit\n"
   echo ""
+  finish_draw
 }
 
 toggle_pass() {
@@ -677,6 +685,8 @@ main_loop() {
 # --- Entry point ---
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+
+trap 'printf "\033[?25h"' EXIT
 
 if ! command -v jq >/dev/null 2>&1; then
   echo "Error: jq is required"
