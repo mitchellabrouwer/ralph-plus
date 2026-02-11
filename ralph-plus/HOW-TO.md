@@ -3,6 +3,9 @@
 ## Quick Start
 
 ```bash
+# Product discovery (once per project) - defines problem, market, scope
+claude 'Use the product agent to define this project'
+
 # Initialize architecture (once per project)
 claude 'Use the architect agent to initialize this project'
 
@@ -27,6 +30,7 @@ Each iteration handles one story. Default is 10 iterations (so up to 10 stories 
 
 | Agent        | What it does                        | When to use directly            |
 | ------------ | ----------------------------------- | ------------------------------- |
+| product    | Product discovery: problem, market, scope | Once per project, before architect |
 | architect    | Sets up architecture + quality gates | Once per project, or on big changes |
 | strategist   | Breaks feature into stories         | Starting any new feature        |
 | planner      | Plans implementation for one story  | (run-task-loop handles this)    |
@@ -40,6 +44,7 @@ Each iteration handles one story. Default is 10 iterations (so up to 10 stories 
 
 | Path                          | What it is                          |
 | ----------------------------- | ----------------------------------- |
+| `docs/product.md`             | Product discovery: problem, market, scope |
 | `docs/architecture.md`        | Project architecture + quality gates |
 | `docs/tasks/task-<name>.json` | Stories with pass/fail status       |
 | `docs/tasks/progress-<name>.txt` | Learnings log from each story    |
