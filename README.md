@@ -46,6 +46,7 @@ Think of Ralph+ like a golf team.
 | e2e          | Checks the ball landed where expected       | sonnet           | playwright, context7    |
 | quality-gate | Rules official, checks the scorecard        | haiku            | -                       |
 | committer    | Records the score                           | haiku            | -                       |
+| verify       | Manual feature verification                 | sonnet           | playwright, context7    |
 
 ## How It Works
 
@@ -195,7 +196,7 @@ Configure the MCP servers your agents need in your project's `.mcp.json`. See `.
 
 | Location                         | Purpose                                                                                   |
 | -------------------------------- | ----------------------------------------------------------------------------------------- |
-| `agents/`                        | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer) |
+| `agents/`                        | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer, verify) |
 | `.claude/agents/`                | Symlinks to `agents/` (consumed by Claude Code)                                           |
 | `ralph-plus/run-task-loop.sh`       | Bash loop that runs one story per iteration                                               |
 | `ralph-plus/CLAUDE.md`              | Orchestrator prompt (coordinates the agents)                                              |

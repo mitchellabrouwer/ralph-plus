@@ -18,6 +18,8 @@ mkdir -p "$TARGET/.claude/agents" "$TARGET/ralph-plus" "$TARGET/docs/tasks"
 cp "$RALPH_DIR"/agents/*.md "$TARGET/.claude/agents/"
 cp "$RALPH_DIR"/ralph-plus/run-task-loop.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/dashboard.sh "$TARGET/ralph-plus/"
+cp "$RALPH_DIR"/ralph-plus/check-complexity.sh "$TARGET/ralph-plus/"
+cp "$RALPH_DIR"/ralph-plus/check-security.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/CLAUDE.md "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/HOW-TO.md "$TARGET/ralph-plus/"
 

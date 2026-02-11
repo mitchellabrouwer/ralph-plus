@@ -32,8 +32,9 @@ Each iteration handles one story. Default is 10 iterations (so up to 10 stories 
 | planner      | Plans implementation for one story  | (run-task-loop handles this)    |
 | tdd          | Red-Green-Refactor                  | (run-task-loop handles this)    |
 | e2e          | Playwright acceptance tests         | (run-task-loop handles this)    |
-| quality-gate | Lint, typecheck, format, tests      | (run-task-loop handles this)    |
+| quality-gate | Lint, typecheck, format, tests, complexity, security | (run-task-loop handles this)    |
 | committer    | Git commit + progress tracking      | (run-task-loop handles this)    |
+| verify       | Manual feature verification via Playwright | `Use the verify agent to check task-<name>.json at http://localhost:3000` |
 
 ## Files
 

@@ -109,6 +109,20 @@ if [ ! -f "$PROGRESS_FILE" ]; then
   echo "---" >> "$PROGRESS_FILE"
 fi
 
+# Check optional dependencies for quality gate checks
+MISSING_OPTIONAL=()
+command -v lizard &> /dev/null || MISSING_OPTIONAL+=("lizard (pip install lizard) - complexity checks")
+command -v semgrep &> /dev/null || MISSING_OPTIONAL+=("semgrep (pip install semgrep) - security checks")
+
+if [ ${#MISSING_OPTIONAL[@]} -gt 0 ]; then
+    echo ""
+    echo "Optional dependencies missing (quality gate will skip these checks):"
+    for dep in "${MISSING_OPTIONAL[@]}"; do
+        echo "  - $dep"
+    done
+    echo ""
+fi
+
 echo "Starting Ralph+ - Task: $TASK_BASENAME - Max iterations: $MAX_ITERATIONS"
 
 for i in $(seq 1 "$MAX_ITERATIONS"); do

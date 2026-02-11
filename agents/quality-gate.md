@@ -25,8 +25,12 @@ Run only the checks specified in the quality gates config. Read `docs/architectu
 2. **Lint**
 3. **Format**
 4. **Tests**
+5. **Complexity** - run `ralph-plus/check-complexity.sh --diff` from the project root
+6. **Security** - run `ralph-plus/check-security.sh --diff` from the project root
 
-If `docs/architecture.md` does not exist or has no Quality Gates table, discover the commands from the project's config files (package.json scripts, Makefile, pyproject.toml, etc.). If a gate is marked "n/a" or no command can be found, skip it.
+If `docs/architecture.md` does not exist or has no Quality Gates table, discover the commands for checks 1-4 from the project's config files (package.json scripts, Makefile, pyproject.toml, etc.). If a gate is marked "n/a" or no command can be found, skip it.
+
+Checks 5-6 always run if the scripts exist. If a script is missing, skip that check.
 
 ## Fixing Mechanical Issues
 
@@ -35,6 +39,14 @@ When typecheck, lint, or format fails, use Codex to fix:
 1. Call `mcp__codex__codex` with the error output and the files involved
 2. Re-run only the checks that failed
 3. If still failing after one fix attempt, report as failed (do not loop)
+
+## Complexity and Security
+
+Do NOT attempt to auto-fix complexity or security findings. These need human judgment.
+
+- **HIGH** severity (CCN >= 20, semgrep ERROR) - **fails the quality gate**
+- **MEDIUM** severity - note in output for awareness, does not block
+- **LOW** severity - ignored
 
 ## Acceptance Criteria Verification
 
@@ -49,7 +61,8 @@ Go through each acceptance criterion from the story:
 Report back with:
 
 - **Overall pass/fail**
-- **Per-check results**: pass/fail/skipped with relevant output
+- **Per-check results**: pass/fail/skipped with relevant output (typecheck, lint, format, tests, complexity, security)
+- **Complexity/security notes**: any MEDIUM findings for awareness (even if gate passes)
 - **Acceptance criteria**: met/not-met with evidence for each
 - **Failure details**: if anything failed, include the error output and a suggestion for what to fix
 
@@ -57,5 +70,6 @@ Report back with:
 
 - Fix mechanical issues (typecheck, lint, format) via Codex - one attempt only
 - Do NOT fix test failures - report them as-is
-- If a check command is not available, mark as skipped (not failed)
+- Do NOT fix complexity or security findings - report them as-is
+- If a check command or script is not available, mark as skipped (not failed)
 - Be precise about what failed and where
