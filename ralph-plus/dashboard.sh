@@ -46,7 +46,7 @@ task_count() {
 }
 
 clear_screen() {
-  printf '\033[H\033[?25l'
+  printf '\033[?25l\033[H\033[2J'
 }
 
 finish_draw() {
