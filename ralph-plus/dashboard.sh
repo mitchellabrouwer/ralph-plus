@@ -5,6 +5,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TASK_DIR="${TASK_DIR:-$SCRIPT_DIR/../docs/tasks}"
+VERSION=$(cat "$SCRIPT_DIR/.version" 2>/dev/null || echo "dev")
 
 # Colors
 GREEN='\033[0;32m'
@@ -274,7 +275,7 @@ show_overview() {
   draw_line "═"
   printf "${RESET}"
   echo ""
-  printf "  ${BOLD}%s${RESET}\n" "$filename"
+  printf "  ${BOLD}%s${RESET}  ${DIM}v%s${RESET}\n" "$filename" "$VERSION"
   printf "  ${GREEN}%s${RESET}/${BOLD}%s${RESET} stories passing  (%s%%)\n" "$passing" "$total" "$pct"
   draw_progress_bar "$passing" "$total"
   printf "  ${BOLD}"
@@ -391,7 +392,7 @@ show_multi_task_overview() {
   draw_line "═"
   printf "${RESET}"
   echo ""
-  printf "  ${BOLD}All Tasks${RESET}\n"
+  printf "  ${BOLD}All Tasks${RESET}  ${DIM}v%s${RESET}\n" "$VERSION"
   printf "  ${BOLD}"
   draw_line "═"
   printf "${RESET}"
