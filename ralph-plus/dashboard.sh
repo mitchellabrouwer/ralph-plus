@@ -67,17 +67,14 @@ read_key() {
   local key
   IFS= read -rsn1 key || { echo "q"; return; }
   if [[ "$key" == $'\x1b' ]]; then
-    local seq
-    IFS= read -rsn1 -t 0.1 seq || true
-    if [[ "$seq" == "[" ]]; then
-      IFS= read -rsn1 -t 0.1 seq || true
-      case "$seq" in
-        A) echo "UP"; return ;;
-        B) echo "DOWN"; return ;;
-        C) echo "RIGHT"; return ;;
-        D) echo "LEFT"; return ;;
-      esac
-    fi
+    local seq=""
+    IFS= read -rsn2 -t 0.5 seq || true
+    case "$seq" in
+      '[A') echo "UP"; return ;;
+      '[B') echo "DOWN"; return ;;
+      '[C') echo "RIGHT"; return ;;
+      '[D') echo "LEFT"; return ;;
+    esac
     echo "ESC"; return
   elif [[ "$key" == "" ]]; then
     echo "ENTER"; return
