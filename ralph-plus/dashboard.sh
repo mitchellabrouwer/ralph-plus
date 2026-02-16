@@ -344,14 +344,14 @@ show_log() {
   activity_log=$(get_activity_log_path)
 
   echo ""
-  printf "  ${BOLD}Activity Log${RESET} ${DIM}($task_basename)${RESET}\n"
+  printf "  ${BOLD}Activity Log${RESET} ${DIM}($task_basename)${RESET}  ${CYAN}[auto]${RESET}\n"
   printf "  ${BOLD}"
   draw_line
   printf "${RESET}"
   echo ""
 
   if [ -f "$activity_log" ]; then
-    head -20 "$activity_log" | while IFS= read -r line; do
+    head -30 "$activity_log" | while IFS= read -r line; do
       printf "  ${DIM}%s${RESET}\n" "$line"
     done
   else
@@ -363,7 +363,7 @@ show_log() {
   draw_line
   printf "${RESET}"
   echo ""
-  printf "  h/Esc back  r refresh\n"
+  printf "  h/Esc back  r refresh  ${DIM}auto 3s${RESET}\n"
   echo ""
   finish_draw
 }
@@ -371,12 +371,18 @@ show_log() {
 log_loop() {
   while true; do
     show_log
-    local key
-    key=$(read_key)
+    local key=""
+    IFS= read -rsn1 -t 3 key || true
+    if [[ "$key" == $'\x1b' ]]; then
+      local seq=""
+      IFS= read -rsn2 -t 0.5 seq || true
+      key="ESC"
+    fi
     case "$key" in
       h|H|b|B|ESC) return ;;
       r|R) continue ;;
       q|Q) exit 0 ;;
+      "") continue ;;
     esac
   done
 }

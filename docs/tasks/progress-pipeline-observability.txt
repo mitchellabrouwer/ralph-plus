@@ -24,3 +24,19 @@ Task: task-pipeline-observability.json
   - Consuming escape sequences in read_key prevents garbage output even when cases are not matched
 
 ---
+
+## 2026-02-16 - US-002: Add auto-refresh to dashboard activity log view
+
+- Added auto-refresh capability to log_loop by replacing blocking read with `read -rsn1 -t 3` timeout, causing automatic re-render every 3 seconds
+- log_loop now uses inline read with timeout and inline escape sequence handling instead of calling read_key, allowing timeout to trigger re-render
+- show_log header now displays [auto] indicator in cyan and help text shows "auto 3s" for user clarity
+- Changed head line count from 20 to 30 in show_log for more context in activity log display
+- Manual key handling preserved: h/Esc returns to overview, q quits, r forces immediate refresh, empty string from timeout continues loop
+- Added 9 new bats tests to verify auto-refresh header, help text, 30-line read, timeout behavior, and key handling
+- Files changed: ralph-plus/dashboard.sh, tests/dashboard.bats
+- **Learnings for future iterations:**
+  - log_loop uses inline read with timeout instead of read_key to enable auto-refresh without modifying read_key function
+  - bash 3.2 on macOS returns exit code 1 for read -t timeout (not 142), requiring `|| true` to prevent set -e failure
+  - Escape sequence handling must be duplicated in log_loop to avoid modifying read_key function signature or side effects
+
+---

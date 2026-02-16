@@ -413,3 +413,82 @@ setup() {
   echo "$stripped" | grep -q "task-beta.json"
   echo "$stripped" | grep -q "stories passing"
 }
+
+# --- US-002: Auto-refresh activity log view ---
+
+@test "show_log header shows auto-refresh indicator" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_log
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q '\[auto\]'
+}
+
+@test "show_log reads 30 lines from activity log" {
+  local func_body
+  func_body=$(declare -f show_log)
+  echo "$func_body" | grep -q 'head -30'
+}
+
+@test "show_log help text mentions auto 3s" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_log
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "auto 3s"
+}
+
+@test "show_log help text still shows h/Esc back and r refresh" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_log
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "h/Esc back"
+  echo "$stripped" | grep -q "r refresh"
+}
+
+@test "log_loop does not call read_key" {
+  local func_body
+  func_body=$(declare -f log_loop)
+  ! echo "$func_body" | grep -q 'read_key'
+}
+
+@test "log_loop uses read with timeout" {
+  local func_body
+  func_body=$(declare -f log_loop)
+  echo "$func_body" | grep -q 'read.*-t 3'
+}
+
+@test "log_loop handles empty key for timeout re-render" {
+  local func_body
+  func_body=$(declare -f log_loop)
+  # The case statement should have a pattern matching empty string
+  echo "$func_body" | grep -q '""'
+}
+
+@test "log view shows auto indicator via dashboard integration" {
+  # Open alpha (first task), press g to enter log, then q to quit
+  local input
+  input=$(printf 'lgq')
+  run bash -c "TASK_DIR='$FIXTURES_DIR' bash '$DASHBOARD' <<< '$input'"
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q '\[auto\]'
+}
+
+@test "log view h key returns to overview" {
+  # Open alpha (first task), press g to enter log, h to return, q to quit
+  local input
+  input=$(printf 'lghq')
+  run bash -c "TASK_DIR='$FIXTURES_DIR' bash '$DASHBOARD' <<< '$input'"
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  # Should have shown Activity Log and then returned to overview with stories passing
+  echo "$stripped" | grep -q "Activity Log"
+  echo "$stripped" | grep -q "stories passing"
+}
