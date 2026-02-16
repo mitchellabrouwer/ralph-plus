@@ -21,6 +21,14 @@ No story with `passes: false`? Run the **Archive** step below then reply `<promi
 
 Run agents **sequentially** via Task tool. Pass each agent's output to the next.
 
+### Context to pass to every agent
+
+Include these lines at the top of every agent Task prompt:
+
+- Activity log: <path from `.current-activity-log`>
+- Iteration: <value from `.current-iteration`>
+- Story: <current story ID>
+
 ### 1. Planner
 
 Spawn `planner`. Pass: story details, PRD path, quality gates, codebase patterns from progress log.
@@ -57,6 +65,12 @@ If quality-gate fails, mark the story failed: add failure details to story `note
 
 No retries. The quality gate already attempted mechanical fixes internally. If it still fails, the issue needs human attention.
 
+## On BLOCKED
+
+If quality-gate reports **BLOCKED**, the environment/tooling is broken and no further stories can pass until it's fixed. **Stop the entire pipeline immediately.** Do NOT move to the next story (it will hit the same problem).
+
+Log: `orchestrator: BLOCKED - <reason from quality-gate>` and output a clear message to the user stating exactly what needs to be fixed before the pipeline can resume.
+
 ## After Committer
 
 Re-read task file. All `passes: true`? Run the **Archive** step then output `<promise>COMPLETE</promise>`. Otherwise end normally.
@@ -89,7 +103,7 @@ tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] US-XXX agent: mes
 
 Include the iteration from `.current-iteration` and the current story ID in every log entry.
 
-Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` | `committer: done` | `orchestrator: FAILED - reason`
+Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` or `BLOCKED - reason` | `committer: done` | `orchestrator: FAILED - reason` | `orchestrator: BLOCKED - reason`
 
 ## Rules
 
