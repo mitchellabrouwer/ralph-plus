@@ -70,3 +70,18 @@ Task: task-pipeline-observability.json
   - Each agent's heartbeat examples should reflect the specific work type and terminology
 
 ---
+
+## 2026-02-16 - US-005: Update orchestrator to pass heartbeat context to agents
+
+- Added "Context to pass to every agent" subsection to the Pipeline section of ralph-plus/CLAUDE.md (lines 24-30)
+- The subsection instructs the orchestrator to include three values at the top of every agent Task prompt: Activity log path (from .current-activity-log), Iteration (from .current-iteration), and Story ID
+- This context is added once in the general subsection, not repeated per agent definition
+- Existing agent prompt instructions (Planner, TDD, E2E, Quality Gate, Committer) remain unchanged
+- Created 13 new bats tests in tests/orchestrator-context.bats validating: heading presence/placement, references to .current-activity-log and .current-iteration, story ID reference, explicit format phrase, subsection ordering, uniqueness, and that all five agent subsections still exist and are not internally modified
+- Files changed: ralph-plus/CLAUDE.md, tests/orchestrator-context.bats (NEW)
+- **Learnings for future iterations:**
+  - Markdown subsection additions tested via awk section extraction: awk '/^### Context/{found=1} found && /^###? / && !/^### Context/{exit} found{print}' extracts subsection content between first matching heading and next heading
+  - Integration tests verify existing content unchanged by checking verbatim lines from agent subsections using grep (e.g. grep -q 'Spawn `planner`. Pass: story details...')
+  - awk pattern for extracting subsection between two heading levels: use next to skip the start heading, exit on next heading at same or higher level, print intermediate lines
+
+---
