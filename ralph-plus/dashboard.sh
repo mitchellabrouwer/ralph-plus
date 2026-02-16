@@ -328,9 +328,9 @@ show_overview() {
   printf "${RESET}"
   echo ""
   if [ "$(task_count)" -gt 1 ]; then
-    printf "  j/k/arrows navigate  l/Enter open  t toggle  g log  h/Esc back  q quit\n"
+    printf "  j/k navigate  l/Enter open  t toggle  g log  h/Esc back  q quit\n"
   else
-    printf "  j/k/arrows navigate  l/Enter open  t toggle  g log  q quit\n"
+    printf "  j/k navigate  l/Enter open  t toggle  g log  q quit\n"
   fi
   echo ""
   finish_draw
@@ -374,7 +374,7 @@ log_loop() {
     local key
     key=$(read_key)
     case "$key" in
-      h|H|b|B|LEFT|ESC) return ;;
+      h|H|b|B|ESC) return ;;
       r|R) continue ;;
       q|Q) exit 0 ;;
     esac
@@ -443,7 +443,7 @@ show_multi_task_overview() {
   draw_line
   printf "${RESET}"
   echo ""
-  printf "  j/k/arrows navigate  l/Enter open  r refresh  q quit\n"
+  printf "  j/k navigate  l/Enter open  r refresh  q quit\n"
   echo ""
   finish_draw
 }
@@ -454,17 +454,17 @@ multi_task_loop() {
     local key
     key=$(read_key)
     case "$key" in
-      j|J|DOWN)
+      j|J)
         if [ "$SEL_MULTI" -lt "$((${#TASK_LIST[@]} - 1))" ]; then
           SEL_MULTI=$((SEL_MULTI + 1))
         fi
         ;;
-      k|K|UP)
+      k|K)
         if [ "$SEL_MULTI" -gt 0 ]; then
           SEL_MULTI=$((SEL_MULTI - 1))
         fi
         ;;
-      l|L|RIGHT|ENTER)
+      l|L|ENTER)
         if [ "${#TASK_LIST[@]}" -gt 0 ]; then
           TASK_FILE="$TASK_DIR/${TASK_LIST[$SEL_MULTI]}"
           main_loop
@@ -632,7 +632,7 @@ story_detail_loop() {
     local key
     key=$(read_key)
     case "$key" in
-      h|H|b|B|LEFT|ESC) return ;;
+      h|H|b|B|ESC) return ;;
       t|T) toggle_pass "$index" ;;
       n|N) edit_notes "$index" ;;
       q|Q) exit 0 ;;
@@ -648,17 +648,17 @@ main_loop() {
     local key
     key=$(read_key)
     case "$key" in
-      j|J|DOWN)
+      j|J)
         if [ "$SEL_MAIN" -lt "$((total - 1))" ]; then
           SEL_MAIN=$((SEL_MAIN + 1))
         fi
         ;;
-      k|K|UP)
+      k|K)
         if [ "$SEL_MAIN" -gt 0 ]; then
           SEL_MAIN=$((SEL_MAIN - 1))
         fi
         ;;
-      l|L|RIGHT|ENTER)
+      l|L|ENTER)
         if [ "$total" -gt 0 ]; then
           story_detail_loop "$SEL_MAIN"
         fi
@@ -669,7 +669,7 @@ main_loop() {
         fi
         ;;
       g|G) log_loop ;;
-      h|H|LEFT|ESC)
+      h|H|ESC)
         if [ "$(task_count)" -gt 1 ]; then
           return
         fi

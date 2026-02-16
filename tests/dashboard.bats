@@ -325,3 +325,91 @@ setup() {
   # US-001 is not selected (SEL_MAIN=1), should use DIM color (\033[2m)
   echo "$output" | grep "US-001" | grep -q $'\033\[2m'
 }
+
+# --- US-001: Arrow key removal tests ---
+
+@test "show_overview help text does not reference arrows" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_overview
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  ! echo "$stripped" | grep -qi "arrow"
+}
+
+@test "show_multi_task_overview help text does not reference arrows" {
+  run show_multi_task_overview
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  ! echo "$stripped" | grep -qi "arrow"
+}
+
+@test "show_overview help text shows j/k navigate without arrows" {
+  TASK_FILE="$FIXTURES_DIR/task-alpha.json"
+  run show_overview
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "j/k navigate"
+}
+
+@test "show_multi_task_overview help text shows j/k navigate without arrows" {
+  run show_multi_task_overview
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  echo "$stripped" | grep -q "j/k navigate"
+}
+
+@test "main_loop case branches do not match arrow keys" {
+  local func_body
+  func_body=$(declare -f main_loop)
+  # declare -f reformats case patterns with spaces: j | J | DOWN)
+  ! echo "$func_body" | grep -q 'DOWN)'
+  ! echo "$func_body" | grep -q 'UP)'
+  ! echo "$func_body" | grep -q 'RIGHT'
+  ! echo "$func_body" | grep -q 'LEFT'
+}
+
+@test "multi_task_loop case branches do not match arrow keys" {
+  local func_body
+  func_body=$(declare -f multi_task_loop)
+  ! echo "$func_body" | grep -q 'DOWN)'
+  ! echo "$func_body" | grep -q 'UP)'
+  ! echo "$func_body" | grep -q 'RIGHT'
+}
+
+@test "story_detail_loop case branches do not match LEFT arrow key" {
+  local func_body
+  func_body=$(declare -f story_detail_loop)
+  ! echo "$func_body" | grep -q 'LEFT'
+}
+
+@test "log_loop case branches do not match LEFT arrow key" {
+  local func_body
+  func_body=$(declare -f log_loop)
+  ! echo "$func_body" | grep -q 'LEFT'
+}
+
+@test "read_key function still returns arrow key names" {
+  local func_body
+  func_body=$(declare -f read_key)
+  echo "$func_body" | grep -q '"UP"'
+  echo "$func_body" | grep -q '"DOWN"'
+  echo "$func_body" | grep -q '"LEFT"'
+  echo "$func_body" | grep -q '"RIGHT"'
+}
+
+@test "j/k navigation still works in multi-task loop" {
+  # j to move to second task, l to open, q to quit
+  local input
+  input=$(printf 'jlq')
+  run bash -c "TASK_DIR='$FIXTURES_DIR' bash '$DASHBOARD' <<< '$input'"
+  [ "$status" -eq 0 ]
+  local stripped
+  stripped=$(echo "$output" | strip_colors)
+  # Should have opened beta (second task) and show stories passing
+  echo "$stripped" | grep -q "task-beta.json"
+  echo "$stripped" | grep -q "stories passing"
+}
