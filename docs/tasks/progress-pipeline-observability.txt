@@ -9,6 +9,8 @@ Task: task-pipeline-observability.json
 
 2. **shellcheck quality bar**: `--severity=warning` is the effective quality gate for bash code. Info and style findings are pre-existing and not blockers. Focus linting on warnings and errors only.
 
+3. **bats section boundary detection (macOS/BSD awk)**: Use awk to extract sections bounded by markdown headings: `awk '/^## SectionName/{found=1; next} found && /^## /{exit} found{n++} END{print n+0}' file` counts lines in the section. This avoids sed limitations on macOS (no -i flag, can't use | head -n -1 reliably). The pattern: find start, skip it (next), exit on next heading, count intermediate lines.
+
 ---
 
 ## 2026-02-16 - US-001: Remove arrow key handling from dashboard
@@ -50,5 +52,21 @@ Task: task-pipeline-observability.json
 - **Learnings for future iterations:**
   - claude --print with --allowedTools Bash --dangerously-skip-permissions can be used for automated testing of agent behaviors
   - seed line technique validates prepend ordering (last line should be the original seed when prepending newer lines to the top)
+
+---
+
+## 2026-02-16 - US-004: Add heartbeat logging instructions to all agent definitions
+
+- Added Heartbeat Logging section to all five pipeline agent definitions (planner, tdd, e2e, quality-gate, committer)
+- Each section instructs the agent to prepend progress lines to the activity log at meaningful milestones using the documented mktemp prepend pattern
+- Sections reference ACTIVITY_LOG_PATH, ITERATION, and STORY_ID context variables passed by the orchestrator
+- Provided agent-specific example messages: planner (analyzing codebase, looking up docs); tdd (writing tests, N/M tests passing); e2e (setting up browser, testing criteria); quality-gate (running typecheck, lint, tests); committer (staging files, committing, updating progress log)
+- All sections are 13 lines each, well within the 15-20 line limit
+- Created 26 new bats tests in tests/heartbeat-instructions.bats validating: presence of Heartbeat Logging heading, mktemp prepend pattern, context variable references, agent-specific examples, and section length constraints
+- Files changed: agents/planner.md, agents/tdd.md, agents/e2e.md, agents/quality-gate.md, agents/committer.md, tests/heartbeat-instructions.bats (NEW)
+- **Learnings for future iterations:**
+  - Use awk for section extraction in bats tests for macOS (BSD) compatibility over sed | head -n -1
+  - Agent definition markdown files follow a consistent template structure for new sections
+  - Each agent's heartbeat examples should reflect the specific work type and terminology
 
 ---
