@@ -73,7 +73,7 @@
         "integration": true,
         "e2e": false
       },
-      "passes": false,
+      "passes": true,
       "notes": ""
     },
     {

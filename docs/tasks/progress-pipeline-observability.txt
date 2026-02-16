@@ -40,3 +40,15 @@ Task: task-pipeline-observability.json
   - Escape sequence handling must be duplicated in log_loop to avoid modifying read_key function signature or side effects
 
 ---
+
+## 2026-02-16 - US-003: Validate heartbeat logging with a proof-of-concept test
+
+- Created test-heartbeat.sh: a self-contained PoC test script that validates the heartbeat logging mechanism
+- The script creates a temp activity log with a seed line, invokes claude --print with Bash tool to prepend 3 heartbeat lines, then verifies lines exist in correct order with seed preserved
+- Outputs PASS/FAIL with details; uses --model haiku for cost/speed
+- Files changed: ralph-plus/test-heartbeat.sh (NEW)
+- **Learnings for future iterations:**
+  - claude --print with --allowedTools Bash --dangerously-skip-permissions can be used for automated testing of agent behaviors
+  - seed line technique validates prepend ordering (last line should be the original seed when prepending newer lines to the top)
+
+---
