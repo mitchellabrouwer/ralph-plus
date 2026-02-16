@@ -1,0 +1,121 @@
+{
+  "project": "Ralph+",
+  "prd": "docs/tasks/prd-pipeline-observability.md",
+  "branchName": "ralph/pipeline-observability",
+  "description": "Add agent heartbeat logging to the existing activity log, auto-refresh to the dashboard log view, and remove arrow key handling from the dashboard.",
+  "qualityGates": {
+    "typescript": false,
+    "linting": true,
+    "formatting": false,
+    "unitTests": false,
+    "integrationTests": false
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Remove arrow key handling from dashboard",
+      "description": "As a user, I want only j/k/h/l keys to navigate the dashboard so that arrow keys no longer cause display issues.",
+      "acceptanceCriteria": [
+        "Arrow key cases (UP, DOWN, LEFT, RIGHT) are removed from main_loop, multi_task_loop, story_detail_loop, and log_loop in ralph-plus/dashboard.sh",
+        "The read_key function still reads escape sequences so they do not produce garbage output, but the returned values are not matched by any case branch",
+        "Help text at the bottom of every screen no longer references arrows - only shows j/k/h/l/Enter",
+        "Help text in show_multi_task_overview no longer references arrows",
+        "All existing j/k/h/l/Enter navigation continues to work unchanged",
+        "Shellcheck clean on ralph-plus/dashboard.sh"
+      ],
+      "priority": 1,
+      "risk": "low",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": true,
+      "notes": ""
+    },
+    {
+      "id": "US-002",
+      "title": "Add auto-refresh to dashboard activity log view",
+      "description": "As a user, I want the activity log view to auto-refresh every few seconds so that I can watch agent progress without repeatedly pressing r.",
+      "acceptanceCriteria": [
+        "The log_loop function in ralph-plus/dashboard.sh uses a read -t 3 timeout (3-second cycle) instead of a blocking read so the view re-renders automatically",
+        "The read_key function is NOT modified; instead log_loop uses its own read with timeout, falling through to re-render show_log when the timeout expires",
+        "Manual key handling still works: h/Esc returns to overview, q quits, r forces immediate refresh",
+        "The log view header shows a visual indicator that auto-refresh is active (e.g. a small auto label)",
+        "The show_log function reads up to 30 lines from the activity log (currently 20) to show more heartbeat context",
+        "Shellcheck clean on ralph-plus/dashboard.sh"
+      ],
+      "priority": 2,
+      "risk": "medium",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-003",
+      "title": "Validate heartbeat logging with a proof-of-concept test",
+      "description": "As a developer, I want to verify that a Task tool subagent can write heartbeat lines to the activity log during execution so that we know the approach works before rolling it out to all agents.",
+      "acceptanceCriteria": [
+        "A test script exists at ralph-plus/test-heartbeat.sh that creates a temporary activity log file, invokes claude --print with a prompt that includes the Bash tool and instructions to prepend 3 heartbeat lines to the activity log using the documented prepend pattern, and verifies the activity log contains the expected heartbeat lines after the session completes",
+        "The test script uses the same prepend pattern documented in ralph-plus/CLAUDE.md: tmp=$(mktemp) && { echo line; cat logfile; } > $tmp && mv $tmp logfile",
+        "The test script outputs PASS or FAIL with details",
+        "The test script is self-contained and can be run independently: ./ralph-plus/test-heartbeat.sh",
+        "Shellcheck clean on ralph-plus/test-heartbeat.sh"
+      ],
+      "priority": 3,
+      "risk": "medium",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-004",
+      "title": "Add heartbeat logging instructions to all agent definitions",
+      "description": "As a user, I want each pipeline agent to periodically log progress lines to the activity log so that I can see what is happening during long-running agent executions.",
+      "acceptanceCriteria": [
+        "Each agent definition (agents/planner.md, agents/tdd.md, agents/e2e.md, agents/quality-gate.md, agents/committer.md) has a new Heartbeat Logging section",
+        "The section instructs the agent to prepend progress lines to the activity log at meaningful milestones using the exact prepend pattern: tmp=$(mktemp) && { echo line; cat ACTIVITY_LOG_PATH; } > $tmp && mv $tmp ACTIVITY_LOG_PATH",
+        "The section tells agents they will receive ACTIVITY_LOG_PATH, ITERATION, and STORY_ID in their Task prompt from the orchestrator",
+        "Example heartbeat messages are provided per agent (planner: analyzing codebase, looking up docs; tdd: writing tests for X, N/M tests passing; e2e: testing criterion N; quality-gate: running typecheck; committer: staging files)",
+        "The instructions are concise - no more than 15-20 lines added per agent file"
+      ],
+      "priority": 4,
+      "risk": "low",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    },
+    {
+      "id": "US-005",
+      "title": "Update orchestrator to pass heartbeat context to agents",
+      "description": "As a pipeline orchestrator, I want to include the activity log path, iteration number, and story ID in every Task prompt so that agents can write heartbeat lines.",
+      "acceptanceCriteria": [
+        "ralph-plus/CLAUDE.md is updated so the Pipeline section instructs the orchestrator to include three values in every agent Task prompt: the activity log path (from .current-activity-log), the current iteration (from .current-iteration), and the current story ID",
+        "The instruction is added once in a general Context to pass to every agent subsection, not repeated per agent",
+        "The format is explicit: Include these lines at the top of every agent prompt: Activity log path, Iteration, Story ID",
+        "Existing agent prompt instructions in the Pipeline section are not otherwise changed"
+      ],
+      "priority": 5,
+      "risk": "low",
+      "testRequirements": {
+        "unit": true,
+        "integration": true,
+        "e2e": false
+      },
+      "passes": false,
+      "notes": ""
+    }
+  ]
+}
