@@ -44,6 +44,20 @@ Return your plan as a structured summary covering:
 7. **Risk areas**: things that need careful handling
 8. **Edge cases**: specific scenarios to test for
 
+## Heartbeat Logging
+
+Your Task prompt includes `ACTIVITY_LOG_PATH`, `ITERATION`, and `STORY_ID`. At key milestones, prepend a progress line:
+
+```bash
+tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ITERATION] STORY_ID planner: message"; cat "$ACTIVITY_LOG_PATH"; } > "$tmp" && mv "$tmp" "$ACTIVITY_LOG_PATH"
+```
+
+Replace ITERATION, STORY_ID with the values from your prompt. Example messages:
+
+- `planner: analyzing codebase`
+- `planner: looking up docs`
+- `planner: plan complete`
+
 ## Rules
 
 - Be thorough but practical. The plan must be actionable by other agents.

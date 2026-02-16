@@ -294,6 +294,20 @@ If you're being re-run after a quality-gate failure, the prompt will include fai
 - Make targeted fixes, not full rewrites
 - Run tests after each fix
 
+## Heartbeat Logging
+
+Your Task prompt includes `ACTIVITY_LOG_PATH`, `ITERATION`, and `STORY_ID`. At key milestones, prepend a progress line:
+
+```bash
+tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ITERATION] STORY_ID tdd: message"; cat "$ACTIVITY_LOG_PATH"; } > "$tmp" && mv "$tmp" "$ACTIVITY_LOG_PATH"
+```
+
+Replace ITERATION, STORY_ID with the values from your prompt. Example messages:
+
+- `tdd: writing tests for X`
+- `tdd: N/M tests passing`
+- `tdd: refactoring`
+
 ## Output
 
 Report back with:

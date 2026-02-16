@@ -11,11 +11,30 @@ Your job is to run quality checks, fix mechanical issues, and report final resul
 ## Process
 
 1. **Read the quality gates config** from `docs/architecture.md` to know which checks to run
-2. **Run checks in order** (compilation before tests)
-3. **If typecheck, lint, or format fails**: call `mcp__codex__codex` with the error output and affected files to fix. Then re-run the failed checks.
-4. **Tests**: report pass/fail only. Do NOT attempt to fix test failures.
-5. **Verify acceptance criteria** from the story
-6. **Report final pass/fail** with details on any remaining failures
+2. **Pre-flight validation** - verify each enabled check can actually run before executing it
+3. **Run checks in order** (compilation before tests)
+4. **If typecheck, lint, or format fails**: call `mcp__codex__codex` with the error output and affected files to fix. Then re-run the failed checks.
+5. **Tests**: report pass/fail only. Do NOT attempt to fix test failures.
+6. **Verify acceptance criteria** from the story
+7. **Report final pass/fail** with details on any remaining failures
+
+## Pre-flight Validation
+
+Before running each check, verify the tooling works. Run a dry-run or version check (e.g. `npx eslint --print-config .` or `npx tsc --version`). If the tool itself is broken, **stop immediately for that check** and report it as BLOCKED.
+
+An **environment/tooling failure** is different from a **code failure**:
+
+| Signal | Type | Example |
+|--------|------|---------|
+| Config file not found / cannot resolve config | **Environment** | `ESLint couldn't find a configuration file`, `Cannot find tsconfig.json` |
+| Command not found / module not installed | **Environment** | `sh: eslint: command not found`, `Cannot find module 'prettier'` |
+| Parser/plugin version mismatch or crash | **Environment** | `TypeError: Cannot read property of undefined` in eslint internals |
+| Permission denied on tool binary | **Environment** | `EACCES: permission denied` |
+| Specific lint rule violations on source files | **Code** | `no-unused-vars`, `@typescript-eslint/no-explicit-any` |
+| Type errors in source files | **Code** | `TS2345: Argument of type 'string' is not assignable` |
+| Test assertions failing | **Code** | `Expected 3 but received 5` |
+
+**If you detect an environment failure**: do NOT attempt to fix it via Codex. Mark the check as **BLOCKED**, include the exact error output, and state what the human needs to fix. Move on to the next check (other checks may still pass).
 
 ## Checks (in order)
 
@@ -56,15 +75,33 @@ Go through each acceptance criterion from the story:
 - Behavioral criteria: verify by reading implementation code
 - E2E criteria: confirmed by e2e agent results (passed in your prompt if applicable)
 
+## Heartbeat Logging
+
+Your Task prompt includes `ACTIVITY_LOG_PATH`, `ITERATION`, and `STORY_ID`. At key milestones, prepend a progress line:
+
+```bash
+tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ITERATION] STORY_ID quality-gate: message"; cat "$ACTIVITY_LOG_PATH"; } > "$tmp" && mv "$tmp" "$ACTIVITY_LOG_PATH"
+```
+
+Replace ITERATION, STORY_ID with the values from your prompt. Example messages:
+
+- `quality-gate: running typecheck`
+- `quality-gate: running lint`
+- `quality-gate: running tests`
+
 ## Output
 
 Report back with:
 
-- **Overall pass/fail**
-- **Per-check results**: pass/fail/skipped with relevant output (typecheck, lint, format, tests, complexity, security)
+- **Overall result**: PASS / FAIL / BLOCKED
+  - PASS: all checks passed or were skipped
+  - FAIL: one or more checks found code issues
+  - BLOCKED: one or more checks could not run due to environment/tooling problems (even if other checks passed)
+- **Per-check results**: pass / fail / skipped / **BLOCKED** with relevant output (typecheck, lint, format, tests, complexity, security)
 - **Complexity/security notes**: any MEDIUM findings for awareness (even if gate passes)
 - **Acceptance criteria**: met/not-met with evidence for each
 - **Failure details**: if anything failed, include the error output and a suggestion for what to fix
+- **Blocked details**: if anything was BLOCKED, include the exact error and what the human needs to fix (e.g. "ESLint config missing - create `.eslintrc` or install the expected config package")
 
 ## Rules
 
@@ -72,4 +109,7 @@ Report back with:
 - Do NOT fix test failures - report them as-is
 - Do NOT fix complexity or security findings - report them as-is
 - If a check command or script is not available, mark as skipped (not failed)
+- If a check command exists but the tooling/environment is broken (missing config, missing dependency, parser crash), mark as **BLOCKED** - do NOT attempt to fix via Codex, do NOT loop
+- BLOCKED takes priority: if any check is BLOCKED, overall result is BLOCKED regardless of other checks passing
 - Be precise about what failed and where
+- When BLOCKED, state the exact fix needed so a human can resolve it in one action

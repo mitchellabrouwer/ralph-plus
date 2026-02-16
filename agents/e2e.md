@@ -315,6 +315,20 @@ Execute each test via Playwright MCP:
 - Assert expected outcomes
 - Capture screenshots as evidence
 
+## Heartbeat Logging
+
+Your Task prompt includes `ACTIVITY_LOG_PATH`, `ITERATION`, and `STORY_ID`. At key milestones, prepend a progress line:
+
+```bash
+tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [ITERATION] STORY_ID e2e: message"; cat "$ACTIVITY_LOG_PATH"; } > "$tmp" && mv "$tmp" "$ACTIVITY_LOG_PATH"
+```
+
+Replace ITERATION, STORY_ID with the values from your prompt. Example messages:
+
+- `e2e: setting up browser`
+- `e2e: testing criterion N`
+- `e2e: all criteria verified`
+
 ## Output
 
 Report back with:
