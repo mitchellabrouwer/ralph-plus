@@ -13,8 +13,9 @@ claude 'Use the architect agent to initialize this project'
 claude 'Use the strategist agent to plan [describe your feature]'
 
 # Run it - each story goes through planner -> tdd -> quality-gate -> committer
-./ralph-plus/run-task-loop.sh --task task-<name>.json        # default: 10 iterations
-./ralph-plus/run-task-loop.sh --task task-<name>.json 5      # custom limit
+./ralph-plus/run-monitored.sh --task task-<name>.json        # tmux session (recommended)
+./ralph-plus/run-unmonitored.sh --task task-<name>.json      # direct, no tmux
+./ralph-plus/run-unmonitored.sh --task task-<name>.json 5    # custom iteration limit
 ```
 
 Each iteration handles one story. Default is 10 iterations (so up to 10 stories per run).
@@ -33,11 +34,11 @@ Each iteration handles one story. Default is 10 iterations (so up to 10 stories 
 | product    | Product discovery: problem, market, scope | Once per project, before architect |
 | architect    | Sets up architecture + quality gates | Once per project, or on big changes |
 | strategist   | Breaks feature into stories         | Starting any new feature        |
-| planner      | Plans implementation for one story  | (run-task-loop handles this)    |
-| tdd          | Red-Green-Refactor                  | (run-task-loop handles this)    |
-| e2e          | Playwright acceptance tests         | (run-task-loop handles this)    |
-| quality-gate | Lint, typecheck, format, tests, complexity, security | (run-task-loop handles this)    |
-| committer    | Git commit + progress tracking      | (run-task-loop handles this)    |
+| planner      | Plans implementation for one story  | (pipeline handles this)         |
+| tdd          | Red-Green-Refactor                  | (pipeline handles this)         |
+| e2e          | Playwright acceptance tests         | (pipeline handles this)         |
+| quality-gate | Lint, typecheck, format, tests, complexity, security | (pipeline handles this)         |
+| committer    | Git commit + progress tracking      | (pipeline handles this)         |
 | verify       | Manual feature verification via Playwright | `Use the verify agent to check task-<name>.json at http://localhost:3000` |
 
 ## Files

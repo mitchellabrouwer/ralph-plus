@@ -16,7 +16,8 @@ UPDATE=false
 mkdir -p "$TARGET/.claude/agents" "$TARGET/ralph-plus" "$TARGET/docs/tasks"
 
 cp "$RALPH_DIR"/agents/*.md "$TARGET/.claude/agents/"
-cp "$RALPH_DIR"/ralph-plus/run-task-loop.sh "$TARGET/ralph-plus/"
+cp "$RALPH_DIR"/ralph-plus/run-monitored.sh "$TARGET/ralph-plus/"
+cp "$RALPH_DIR"/ralph-plus/run-unmonitored.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/dashboard.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/check-complexity.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/check-security.sh "$TARGET/ralph-plus/"
@@ -37,5 +38,5 @@ else
   echo "Done. Next steps:"
   echo "  1. claude 'Use the architect agent to initialize this project'"
   echo "  2. claude 'Use the strategist agent to plan [your feature]'"
-  echo "  3. ./ralph-plus/run-task-loop.sh --task task-<name>.json"
+  echo "  3. ./ralph-plus/run-monitored.sh --task task-<name>.json"
 fi

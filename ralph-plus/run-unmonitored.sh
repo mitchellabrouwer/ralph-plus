@@ -1,6 +1,6 @@
 #!/bin/bash
-# Ralph+ - Multi-agent pipeline for autonomous story implementation
-# Usage: ./run-task-loop.sh --task task-<name>.json [max_iterations]
+# Ralph+ Unmonitored Mode - runs pipeline directly in current shell
+# Usage: ./run-unmonitored.sh --task task-<name>.json [max_iterations]
 
 set -e
 
@@ -30,7 +30,7 @@ while [[ $# -gt 0 ]]; do
         shift
       else
         echo "Error: Unknown argument '$1'"
-        echo "Usage: ./run-task-loop.sh --task task-<name>.json [max_iterations]"
+        echo "Usage: ./run-unmonitored.sh --task task-<name>.json [max_iterations]"
         exit 1
       fi
       ;;

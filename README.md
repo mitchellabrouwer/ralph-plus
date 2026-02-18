@@ -15,7 +15,7 @@ claude 'Use the architect agent to initialize this project'
 claude 'Use the strategist agent to plan [describe your feature]'
 
 # 4. Run it - each story goes through planner -> tdd -> quality-gate -> committer
-./ralph-plus/run-task-loop.sh --task task-<name>.json
+./ralph-plus/run-monitored.sh --task task-<name>.json
 ```
 
 You focus on step 3 (describing the feature, answering questions, reviewing stories). Everything after that is autonomous.
@@ -59,7 +59,7 @@ You handle strategy. The agents handle everything else.
   │  2. Answer questions ◄────►  strategist (researches, asks, produces task-<name>.json)
   │  3. Architect           ◄──  (if first time or feature outside current arch)
   │  4. Review task-<name>.json         │
-  │  5. Run run-task-loop.sh            │
+  │  5. Run run-monitored.sh            │
   │                               │
   │                          per story:
   │                               ├── planner       (technical plan)
@@ -117,7 +117,7 @@ Check that stories are small enough (one context window each), ordered by depend
 ### Step 3: Run the loop
 
 ```bash
-./ralph-plus/run-task-loop.sh --task task-<name>.json [max_iterations]
+./ralph-plus/run-monitored.sh --task task-<name>.json [max_iterations]
 ```
 
 Default is 10 iterations. Each iteration implements one story. The script:
@@ -169,7 +169,7 @@ Then:
 
 1. **Initialize architecture** - run the architect agent to create `docs/architecture.md` with your project's quality gates
 2. **Create your first task** - describe a feature to the strategist agent, or write a PRD markdown in `docs/tasks/` and convert it to `task-<name>.json`
-3. **Run the loop** - `./ralph-plus/run-task-loop.sh --task task-<name>.json`
+3. **Run the loop** - `./ralph-plus/run-monitored.sh --task task-<name>.json`
 
 ### Third-party skills (npx skills add)
 
@@ -198,7 +198,8 @@ Configure the MCP servers your agents need in your project's `.mcp.json`. See `.
 | -------------------------------- | ----------------------------------------------------------------------------------------- |
 | `agents/`                        | 🏌️ Player definitions (architect, strategist, planner, tdd, e2e, quality-gate, committer, verify) |
 | `.claude/agents/`                | Symlinks to `agents/` (consumed by Claude Code)                                           |
-| `ralph-plus/run-task-loop.sh`       | Bash loop that runs one story per iteration                                               |
+| `ralph-plus/run-monitored.sh`          | Runs pipeline in tmux session (attach/detach anytime)                                     |
+| `ralph-plus/run-unmonitored.sh`        | Runs pipeline directly in current shell                                                   |
 | `ralph-plus/CLAUDE.md`              | Orchestrator prompt (coordinates the agents)                                              |
 | `ralph-plus/dashboard.sh`           | Interactive task dashboard                                                                |
 | `docs/tasks/`                    | Task files and progress logs                                                              |
