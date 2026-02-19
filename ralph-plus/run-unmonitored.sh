@@ -1,6 +1,6 @@
 #!/bin/bash
 # Ralph+ Unmonitored Mode - runs pipeline directly in current shell
-# Usage: ./run-unmonitored.sh --task task-<name>.json [max_iterations]
+# Usage: ./run-unmonitored.sh --task task-<name>.json [--provider claude|codex] [max_iterations]
 
 set -e
 
@@ -13,6 +13,7 @@ CURRENT_ITERATION_FILE="$SCRIPT_DIR/.current-iteration"
 
 TASK_NAME=""
 MAX_ITERATIONS=10
+PROVIDER="claude"
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -24,18 +25,40 @@ while [[ $# -gt 0 ]]; do
       TASK_NAME="${1#*=}"
       shift
       ;;
+    --provider)
+      PROVIDER="$2"
+      shift 2
+      ;;
+    --provider=*)
+      PROVIDER="${1#*=}"
+      shift
+      ;;
     *)
       if [[ "$1" =~ ^[0-9]+$ ]]; then
         MAX_ITERATIONS="$1"
         shift
       else
         echo "Error: Unknown argument '$1'"
-        echo "Usage: ./run-unmonitored.sh --task task-<name>.json [max_iterations]"
+        echo "Usage: ./run-unmonitored.sh --task task-<name>.json [--provider claude|codex] [max_iterations]"
         exit 1
       fi
       ;;
   esac
 done
+
+# Validate provider
+case "$PROVIDER" in
+  claude|codex) ;;
+  *)
+    echo "Error: Unknown provider '$PROVIDER'. Must be 'claude' or 'codex'."
+    exit 1
+    ;;
+esac
+
+if ! command -v "$PROVIDER" &> /dev/null; then
+  echo "Error: $PROVIDER CLI not found on PATH"
+  exit 1
+fi
 
 if [ ! -d "$TASK_DIR" ]; then
   echo "Error: Tasks directory not found: $TASK_DIR"
@@ -99,7 +122,7 @@ prepend_log() {
 }
 
 # Initialize activity log
-prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: started task=$TASK_BASENAME max_iterations=$MAX_ITERATIONS"
+prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: started task=$TASK_BASENAME max_iterations=$MAX_ITERATIONS provider=$PROVIDER"
 
 # Initialize progress file if missing
 if [ ! -f "$PROGRESS_FILE" ]; then
@@ -123,7 +146,7 @@ if [ ${#MISSING_OPTIONAL[@]} -gt 0 ]; then
     echo ""
 fi
 
-echo "Starting Ralph+ - Task: $TASK_BASENAME - Max iterations: $MAX_ITERATIONS"
+echo "Starting Ralph+ - Task: $TASK_BASENAME - Provider: $PROVIDER - Max iterations: $MAX_ITERATIONS"
 
 for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo ""
@@ -134,7 +157,11 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo "$i/$MAX_ITERATIONS" > "$CURRENT_ITERATION_FILE"
   prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS started"
 
-  OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+  if [ "$PROVIDER" = "claude" ]; then
+    OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+  else
+    OUTPUT=$(codex exec --full-auto - < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+  fi
 
   # Check for completion signal
   if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then

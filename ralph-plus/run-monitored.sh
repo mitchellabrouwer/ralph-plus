@@ -2,7 +2,7 @@
 # Ralph+ Monitored Mode - runs pipeline in tmux session
 #
 # Usage:
-#   ./run-monitored.sh --task task-foo.json [max_iterations]
+#   ./run-monitored.sh --task task-foo.json [--provider claude|codex] [max_iterations]
 #
 # Attach to watch:   tmux attach -t ralph-<slug>
 # Detach:            Ctrl-b d

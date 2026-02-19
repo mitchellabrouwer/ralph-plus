@@ -13,9 +13,27 @@ fi
 UPDATE=false
 [ -d "$TARGET/ralph-plus" ] && UPDATE=true
 
-mkdir -p "$TARGET/.claude/agents" "$TARGET/ralph-plus" "$TARGET/docs/tasks"
+mkdir -p "$TARGET/.claude/agents" "$TARGET/.codex/agents" "$TARGET/ralph-plus" "$TARGET/docs/tasks"
 
+# Claude agents
 cp "$RALPH_DIR"/agents/*.md "$TARGET/.claude/agents/"
+
+# Codex agents (regenerate from latest agent definitions, then copy)
+"$RALPH_DIR/sync-codex-agents.sh" > /dev/null
+cp "$RALPH_DIR"/.codex/config.toml "$TARGET/.codex/"
+cp "$RALPH_DIR"/.codex/agents/*.toml "$TARGET/.codex/agents/"
+
+# Trust this project in Codex global config so .codex/config.toml is loaded
+CODEX_GLOBAL="$HOME/.codex/config.toml"
+mkdir -p "$HOME/.codex"
+if [ ! -f "$CODEX_GLOBAL" ] || ! grep -q "\"$TARGET\"" "$CODEX_GLOBAL" 2>/dev/null; then
+  cat >> "$CODEX_GLOBAL" << EOF
+
+[projects."$TARGET"]
+trust_level = "trusted"
+EOF
+  echo "Trusted project in $CODEX_GLOBAL"
+fi
 cp "$RALPH_DIR"/ralph-plus/run-monitored.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/run-unmonitored.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/dashboard.sh "$TARGET/ralph-plus/"
@@ -39,4 +57,7 @@ else
   echo "  1. claude 'Use the architect agent to initialize this project'"
   echo "  2. claude 'Use the strategist agent to plan [your feature]'"
   echo "  3. ./ralph-plus/run-monitored.sh --task task-<name>.json"
+  echo ""
+  echo "  To use Codex instead of Claude:"
+  echo "  ./ralph-plus/run-monitored.sh --task task-<name>.json --provider codex"
 fi

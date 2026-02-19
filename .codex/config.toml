@@ -1,0 +1,42 @@
+# Auto-generated from agents/*.md by sync-codex-agents.sh
+# Re-run after editing agent definitions. Do not edit manually.
+
+[features]
+multi_agent = true
+
+[agents.architect]
+description = """Use this agent to initialize docs/architecture.md in a project."""
+config_file = "agents/architect.toml"
+
+[agents.committer]
+description = """Commit code progress to git, update prd progress, update current prd task and record key learnings."""
+config_file = "agents/committer.toml"
+
+[agents.e2e]
+description = """Write and run end to end playwright tests for web apps."""
+config_file = "agents/e2e.toml"
+
+[agents.planner]
+description = """Use this agent to determine what story to work on next from the docs/tasks folder. It reads the codebase, looks up documentation, and outputs a structured plan that the tdd agent follows."""
+config_file = "agents/planner.toml"
+
+[agents.product]
+description = """Use this agent to run product discovery for a new project. Produces docs/product.md with business problem, target market, scope, and success criteria."""
+config_file = "agents/product.toml"
+
+[agents.quality-gate]
+description = """Quality checker to make sure code adheres to definition of done. It runs typecheck, lint, format, tests, etc. Fixes mechanical issues (lint, format, typecheck) via Codex, then re-verifies. Reports final pass/fail."""
+config_file = "agents/quality-gate.toml"
+
+[agents.strategist]
+description = """Creates overriding strategy for epic or feature request, gets human input, researches and creates user stories."""
+config_file = "agents/strategist.toml"
+
+[agents.tdd]
+description = """Use this agent to implement a user story through the full TDD Red-Green-Refactor cycle. It writes failing tests, implements minimal code to pass them, and refactors."""
+config_file = "agents/tdd.toml"
+
+[agents.verify]
+description = """Manually verify a completed feature by navigating the app with Playwright and checking acceptance criteria."""
+config_file = "agents/verify.toml"
+
