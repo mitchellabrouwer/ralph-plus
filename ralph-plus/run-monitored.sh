@@ -237,6 +237,22 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   ) &
   INJECTOR_PID=$!
 
+  # Background watcher: polls activity log for iteration-ending events,
+  # then sends /exit to close the provider so the loop can advance.
+  # Matches: committer: done, FAIL, BLOCKED, COMPLETE for this iteration.
+  (
+    sleep 90  # minimum processing time before polling
+    while true; do
+      sleep 10
+      if grep -qE "\[$i/$MAX_ITERATIONS\] .*(committer: done|FAIL|BLOCKED|COMPLETE)" "$ACTIVITY_LOG" 2>/dev/null; then
+        sleep 15  # let provider finish any final output
+        tmux send-keys -t "$SESSION_NAME" "/exit" Enter
+        break
+      fi
+    done
+  ) &
+  WATCHER_PID=$!
+
   # Run provider interactively - full TUI visible in tmux
   if [ "$PROVIDER" = "claude" ]; then
     "$PROVIDER_BIN" --dangerously-skip-permissions || true
@@ -245,6 +261,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   fi
 
   kill $INJECTOR_PID 2>/dev/null || true
+  kill $WATCHER_PID 2>/dev/null || true
   rm -f "$PROMPT_FILE" 2>/dev/null || true
 
   # Check completion by reading task file
