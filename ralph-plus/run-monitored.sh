@@ -210,7 +210,8 @@ sys.exit(0 if stories and all(s.get('passes', False) for s in stories) else 1)
 " 2>/dev/null
 }
 
-for i in $(seq 1 "$MAX_ITERATIONS"); do
+i=1
+while [ "$i" -le "$MAX_ITERATIONS" ]; do
   echo ""
   echo "==============================================================="
   echo "  Ralph+ Iteration $i of $MAX_ITERATIONS"
@@ -237,19 +238,31 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   ) &
   INJECTOR_PID=$!
 
-  # Background watcher: polls activity log for iteration-ending events,
-  # then sends /exit to close the provider so the loop can advance.
-  # Matches: committer: done, FAIL, BLOCKED, COMPLETE for this iteration.
+  # Background watcher: polls activity log for ITERATION_COMPLETE or
+  # ITERATION_FAIL signals from the orchestrator, then sends /exit.
+  # Times out after 45 minutes and forces exit for retry.
+  WATCHER_RESULT=$(mktemp)
   (
-    sleep 90  # minimum processing time before polling
-    while true; do
+    TIMEOUT=2700  # 45 minutes
+    ELAPSED=0
+
+    sleep 60  # minimum processing time before polling
+    ELAPSED=60
+
+    while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
       sleep 10
-      if grep -qE "\[$i/$MAX_ITERATIONS\] .*(committer: done|FAIL|BLOCKED|COMPLETE)" "$ACTIVITY_LOG" 2>/dev/null; then
-        sleep 15  # let provider finish any final output
+      ELAPSED=$((ELAPSED + 10))
+      if grep -qE "\[$i/$MAX_ITERATIONS\] .*ITERATION_(COMPLETE|FAIL)" "$ACTIVITY_LOG" 2>/dev/null; then
+        sleep 15  # let provider finish final output
         tmux send-keys -t "$SESSION_NAME" "/exit" Enter
-        break
+        echo "DONE" > "$WATCHER_RESULT"
+        exit 0
       fi
     done
+
+    # Timeout: force exit for retry
+    tmux send-keys -t "$SESSION_NAME" "/exit" Enter
+    echo "TIMEOUT" > "$WATCHER_RESULT"
   ) &
   WATCHER_PID=$!
 
@@ -264,6 +277,17 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   kill $WATCHER_PID 2>/dev/null || true
   rm -f "$PROMPT_FILE" 2>/dev/null || true
 
+  # Check watcher result
+  RESULT=$(cat "$WATCHER_RESULT" 2>/dev/null || echo "UNKNOWN")
+  rm -f "$WATCHER_RESULT"
+
+  if [ "$RESULT" = "TIMEOUT" ]; then
+    prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS TIMEOUT - retrying"
+    echo "Iteration $i timed out after 45 minutes. Retrying..."
+    sleep 5
+    continue  # retry same iteration (i not incremented)
+  fi
+
   # Check completion by reading task file
   if all_stories_pass; then
     prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: COMPLETE at iteration $i/$MAX_ITERATIONS"
@@ -276,6 +300,7 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS finished"
   echo "Iteration $i complete. Continuing..."
   sleep 2
+  i=$((i + 1))
 done
 
 echo ""
