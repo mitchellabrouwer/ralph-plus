@@ -8,7 +8,7 @@
 # Usage:
 #   ./run-monitored.sh --task task-foo.json [--provider claude|codex] [max_iterations]
 #
-# Attach to watch:   tmux attach -t <project>-<branch>
+# Attach to watch:   tmux attach -t <task-slug>
 # Detach:            Ctrl-b d
 
 set -e
@@ -97,10 +97,8 @@ PROGRESS_FILE="$TASK_DIR/progress-$TASK_SLUG.txt"
 ACTIVITY_LOG="$TASK_DIR/activity-$TASK_SLUG.log"
 OUTPUT_LOG="$TASK_DIR/output-$TASK_SLUG.log"
 
-# Session name: <project-root>-<branch>
-PROJECT_ROOT=$(basename "$(cd "$SCRIPT_DIR/.." && pwd)")
-GIT_BRANCH=$(git -C "$SCRIPT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "main")
-SESSION_NAME="${PROJECT_ROOT}-${GIT_BRANCH}"
+# Session name: task slug (matches PRD name, e.g. white-atlas-mvp)
+SESSION_NAME="$TASK_SLUG"
 # tmux session names can't contain dots or colons
 SESSION_NAME="${SESSION_NAME//[.:]/-}"
 
@@ -141,7 +139,12 @@ if [ -z "${RALPH_MONITORED:-}" ]; then
   echo "Reattach:    tmux attach -t $SESSION_NAME"
   echo "========================================"
 
-  tmux attach -t "$SESSION_NAME"
+  # Use switch-client when already inside tmux to avoid nesting warning
+  if [ -n "${TMUX:-}" ]; then
+    tmux switch-client -t "$SESSION_NAME"
+  else
+    tmux attach -t "$SESSION_NAME"
+  fi
   exit 0
 fi
 
