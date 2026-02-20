@@ -61,7 +61,9 @@ Commits, sets `passes: true`, appends learnings to progress log.
 
 ## On Failure
 
-If quality-gate fails, mark the story failed: add failure details to story `notes`, do NOT set `passes: true`, move to next story.
+If quality-gate fails, mark the story failed: add failure details to story `notes`, do NOT set `passes: true`.
+
+Log `orchestrator: ITERATION_FAIL - <reason>` to the activity log as the very last action.
 
 No retries. The quality gate already attempted mechanical fixes internally. If it still fails, the issue needs human attention.
 
@@ -69,11 +71,11 @@ No retries. The quality gate already attempted mechanical fixes internally. If i
 
 If quality-gate reports **BLOCKED**, the environment/tooling is broken and no further stories can pass until it's fixed. **Stop the entire pipeline immediately.** Do NOT move to the next story (it will hit the same problem).
 
-Log: `orchestrator: BLOCKED - <reason from quality-gate>` and output a clear message to the user stating exactly what needs to be fixed before the pipeline can resume.
+Log `orchestrator: ITERATION_BLOCKED - <reason from quality-gate>` to the activity log as the very last action, then output a clear message to the user stating exactly what needs to be fixed before the pipeline can resume.
 
 ## After Committer
 
-Re-read task file. All `passes: true`? Run the **Archive** step then output `<promise>COMPLETE</promise>`. Otherwise end normally.
+Re-read task file. All `passes: true`? Run the **Archive** step then output `<promise>COMPLETE</promise>`. Otherwise log `orchestrator: ITERATION_DONE` to the activity log as the very last action.
 
 ## Archive
 
@@ -90,6 +92,7 @@ Run this when all stories pass, before outputting `<promise>COMPLETE</promise>`.
 4. Move this task's specific files into it: `task-<slug>.json`, `prd-<slug>.md`, `progress-<slug>.txt`, `activity-<slug>.log`
 5. Log the archive to the activity log before moving it: `orchestrator: archived task to completed/`
 6. Commit the archive (learnings update + moved files) with message: `chore: archive completed task <slug>`
+7. Log `orchestrator: ITERATION_DONE` to the activity log as the very last action (before outputting `<promise>COMPLETE</promise>`)
 
 ## Activity Log
 
@@ -103,7 +106,7 @@ tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] US-XXX agent: mes
 
 Include the iteration from `.current-iteration` and the current story ID in every log entry.
 
-Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` or `BLOCKED - reason` | `committer: done` | `orchestrator: FAILED - reason` | `orchestrator: BLOCKED - reason`
+Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` or `BLOCKED - reason` | `committer: done` | `orchestrator: ITERATION_DONE` | `orchestrator: ITERATION_FAIL - reason` | `orchestrator: ITERATION_BLOCKED - reason`
 
 ## Rules
 
@@ -111,3 +114,4 @@ Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: 
 - Pass context via Task tool prompts, no temp files
 - Never modify code yourself
 - Read Codebase Patterns from both `docs/tasks/LEARNINGS.md` and the current progress log before starting
+- Always log an ITERATION signal (`ITERATION_DONE`, `ITERATION_FAIL`, or `ITERATION_BLOCKED`) as the very last action of every iteration

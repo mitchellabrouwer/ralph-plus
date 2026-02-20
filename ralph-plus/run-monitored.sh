@@ -238,11 +238,10 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
   ) &
   INJECTOR_PID=$!
 
-  # Background watcher: polls task file for modification (committer sets
-  # passes:true, or failure adds notes). Sends /exit when detected.
-  # Times out after 45 minutes and forces exit for retry.
-  TASK_MTIME=$(stat -f %m "$TASK_FILE" 2>/dev/null || echo "0")
+  # Background watcher: polls activity log for ITERATION signals.
+  # Sends /exit when detected. Times out after 45 minutes for retry.
   WATCHER_RESULT=$(mktemp)
+  SIGNAL_PATTERN="\[$i/$MAX_ITERATIONS\] .*orchestrator: ITERATION_(DONE|FAIL|BLOCKED)"
   (
     TIMEOUT=2700  # 45 minutes
     ELAPSED=0
@@ -253,11 +252,11 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
     while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
       sleep 10
       ELAPSED=$((ELAPSED + 10))
-      CURRENT_MTIME=$(stat -f %m "$TASK_FILE" 2>/dev/null || echo "0")
-      if [ "$CURRENT_MTIME" != "$TASK_MTIME" ]; then
+      if grep -qE "$SIGNAL_PATTERN" "$ACTIVITY_LOG" 2>/dev/null; then
+        SIGNAL=$(grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" "$ACTIVITY_LOG" | head -1)
         sleep 15  # let provider finish final output
         tmux send-keys -t "$SESSION_NAME" "/exit" Enter
-        echo "DONE" > "$WATCHER_RESULT"
+        echo "$SIGNAL" > "$WATCHER_RESULT"
         exit 0
       fi
     done
@@ -290,7 +289,14 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
     continue  # retry same iteration (i not incremented)
   fi
 
-  # Check completion by reading task file
+  if [ "$RESULT" = "ITERATION_BLOCKED" ]; then
+    prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS BLOCKED - stopping"
+    echo ""
+    echo "Ralph+ BLOCKED: environment/tooling issue detected. Check activity log for details."
+    exit 1
+  fi
+
+  # ITERATION_DONE or ITERATION_FAIL: check completion then advance
   if all_stories_pass; then
     prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: COMPLETE at iteration $i/$MAX_ITERATIONS"
     echo ""
@@ -299,8 +305,8 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
     exit 0
   fi
 
-  prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS finished"
-  echo "Iteration $i complete. Continuing..."
+  prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS finished ($RESULT)"
+  echo "Iteration $i complete ($RESULT). Continuing..."
   sleep 2
   i=$((i + 1))
 done
