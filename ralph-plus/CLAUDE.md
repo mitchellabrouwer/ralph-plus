@@ -61,21 +61,19 @@ Commits, sets `passes: true`, appends learnings to progress log.
 
 ## On Failure
 
-If quality-gate fails, mark the story failed: add failure details to story `notes`, do NOT set `passes: true`.
+If quality-gate fails, mark the story failed: add failure details to story `notes`, do NOT set `passes: true`, move to next story.
 
-Log `orchestrator: ITERATION_FAIL - <reason>` to the activity log. No retries. The quality gate already attempted mechanical fixes internally. If it still fails, the issue needs human attention.
+No retries. The quality gate already attempted mechanical fixes internally. If it still fails, the issue needs human attention.
 
 ## On BLOCKED
 
 If quality-gate reports **BLOCKED**, the environment/tooling is broken and no further stories can pass until it's fixed. **Stop the entire pipeline immediately.** Do NOT move to the next story (it will hit the same problem).
 
-Log `orchestrator: ITERATION_FAIL - BLOCKED - <reason>` to the activity log and output a clear message to the user stating exactly what needs to be fixed before the pipeline can resume.
+Log: `orchestrator: BLOCKED - <reason from quality-gate>` and output a clear message to the user stating exactly what needs to be fixed before the pipeline can resume.
 
 ## After Committer
 
-Re-read task file. All `passes: true`? Run the **Archive** step then output `<promise>COMPLETE</promise>`.
-
-Log `orchestrator: ITERATION_COMPLETE` to the activity log. This MUST be the last thing you log before ending.
+Re-read task file. All `passes: true`? Run the **Archive** step then output `<promise>COMPLETE</promise>`. Otherwise end normally.
 
 ## Archive
 
@@ -105,7 +103,7 @@ tmp=$(mktemp) && { echo "[$(date '+%Y-%m-%d %H:%M:%S')] [3/10] US-XXX agent: mes
 
 Include the iteration from `.current-iteration` and the current story ID in every log entry.
 
-Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` or `BLOCKED - reason` | `committer: done` | `orchestrator: ITERATION_COMPLETE` | `orchestrator: ITERATION_FAIL - reason`
+Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: done - N files, N steps` | `tdd: starting` / `tdd: done - N tests passing` | `quality-gate: PASS` or `FAIL - reason` or `BLOCKED - reason` | `committer: done` | `orchestrator: FAILED - reason` | `orchestrator: BLOCKED - reason`
 
 ## Rules
 

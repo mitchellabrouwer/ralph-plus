@@ -238,9 +238,10 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
   ) &
   INJECTOR_PID=$!
 
-  # Background watcher: polls activity log for ITERATION_COMPLETE or
-  # ITERATION_FAIL signals from the orchestrator, then sends /exit.
+  # Background watcher: polls task file for modification (committer sets
+  # passes:true, or failure adds notes). Sends /exit when detected.
   # Times out after 45 minutes and forces exit for retry.
+  TASK_MTIME=$(stat -f %m "$TASK_FILE" 2>/dev/null || echo "0")
   WATCHER_RESULT=$(mktemp)
   (
     TIMEOUT=2700  # 45 minutes
@@ -252,7 +253,8 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
     while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
       sleep 10
       ELAPSED=$((ELAPSED + 10))
-      if grep -qE "\[$i/$MAX_ITERATIONS\] .*ITERATION_(COMPLETE|FAIL)" "$ACTIVITY_LOG" 2>/dev/null; then
+      CURRENT_MTIME=$(stat -f %m "$TASK_FILE" 2>/dev/null || echo "0")
+      if [ "$CURRENT_MTIME" != "$TASK_MTIME" ]; then
         sleep 15  # let provider finish final output
         tmux send-keys -t "$SESSION_NAME" "/exit" Enter
         echo "DONE" > "$WATCHER_RESULT"
