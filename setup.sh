@@ -26,7 +26,19 @@ cp "$RALPH_DIR"/.codex/agents/*.toml "$TARGET/.codex/agents/"
 # Trust this project in Codex global config so .codex/config.toml is loaded
 CODEX_GLOBAL="$HOME/.codex/config.toml"
 mkdir -p "$HOME/.codex"
-if [ ! -f "$CODEX_GLOBAL" ] || ! grep -q "\"$TARGET\"" "$CODEX_GLOBAL" 2>/dev/null; then
+if [ ! -f "$CODEX_GLOBAL" ] || ! grep -qF "\"$TARGET\"" "$CODEX_GLOBAL" 2>/dev/null; then
+  # If projects exists as an inline table, convert it to standard tables first
+  if grep -qE '^projects\s*=' "$CODEX_GLOBAL" 2>/dev/null; then
+    INLINE=$(grep -E '^projects\s*=' "$CODEX_GLOBAL")
+    # Remove the inline table line
+    sed -i '' '/^projects\s*=/d' "$CODEX_GLOBAL"
+    # Parse inline entries and append as standard tables
+    echo "$INLINE" | grep -oE '"[^"]+" = \{ trust_level = "[^"]+" \}' | while read -r entry; do
+      path=$(echo "$entry" | sed 's/"\([^"]*\)".*/\1/')
+      level=$(echo "$entry" | sed 's/.*trust_level = "\([^"]*\)".*/\1/')
+      printf '\n[projects."%s"]\ntrust_level = "%s"\n' "$path" "$level" >> "$CODEX_GLOBAL"
+    done
+  fi
   cat >> "$CODEX_GLOBAL" << EOF
 
 [projects."$TARGET"]
