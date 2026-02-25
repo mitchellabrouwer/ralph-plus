@@ -46,6 +46,9 @@ trust_level = "trusted"
 EOF
   echo "Trusted project in $CODEX_GLOBAL"
 fi
+# Write version from git tag
+VERSION=$(git -C "$RALPH_DIR" describe --tags --abbrev=0 2>/dev/null || echo "dev")
+echo "$VERSION" > "$TARGET/ralph-plus/.version"
 cp "$RALPH_DIR"/ralph-plus/run-monitored.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/run-unmonitored.sh "$TARGET/ralph-plus/"
 cp "$RALPH_DIR"/ralph-plus/dashboard.sh "$TARGET/ralph-plus/"
