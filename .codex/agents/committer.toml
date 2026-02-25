@@ -1,4 +1,3 @@
-model = "gpt-4o-mini"
 model_reasoning_effort = "low"
 sandbox_mode = "workspace-write"
 developer_instructions = """
