@@ -20,10 +20,9 @@ mkdir -p "$CODEX_AGENTS_DIR"
 # Only haiku-mapped agents get an explicit lighter model.
 # opus/sonnet agents inherit the global model from ~/.codex/config.toml.
 map_model_line() {
-  case "$1" in
-    haiku) echo 'model = "gpt-4o-mini"' ;;
-    *)     echo "" ;;
-  esac
+  # All agents inherit the global model from ~/.codex/config.toml.
+  # Reasoning effort (low/medium/high) handles the light-vs-heavy distinction.
+  echo ""
 }
 
 map_reasoning_effort() {
