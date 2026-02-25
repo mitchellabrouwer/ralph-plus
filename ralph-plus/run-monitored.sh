@@ -8,7 +8,7 @@
 # Usage:
 #   ./run-monitored.sh --task task-foo.json [--provider claude|codex] [max_iterations]
 #
-# Attach to watch:   tmux attach -t <task-slug>
+# Attach to watch:   tmux attach -t <project>/<task-slug>
 # Detach:            Ctrl-b d
 
 set -e
@@ -18,7 +18,8 @@ export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:${PATH}"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_PATH="$SCRIPT_DIR/$(basename "${BASH_SOURCE[0]}")"
-TASK_DIR="$SCRIPT_DIR/../docs/tasks"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+TASK_DIR="$PROJECT_ROOT/docs/tasks"
 
 # State files
 CURRENT_TASK_FILE="$SCRIPT_DIR/.current-task"
@@ -95,10 +96,9 @@ TASK_SLUG="${TASK_BASENAME#task-}"
 TASK_SLUG="${TASK_SLUG%.json}"
 PROGRESS_FILE="$TASK_DIR/progress-$TASK_SLUG.txt"
 ACTIVITY_LOG="$TASK_DIR/activity-$TASK_SLUG.log"
-OUTPUT_LOG="$TASK_DIR/output-$TASK_SLUG.log"
-
-# Session name: task slug (matches PRD name, e.g. white-atlas-mvp)
-SESSION_NAME="$TASK_SLUG"
+# Session name: project-name/task-slug (e.g. my-app/white-atlas-mvp)
+PROJECT_NAME=$(basename "$(cd "$SCRIPT_DIR/.." && pwd)")
+SESSION_NAME="${PROJECT_NAME}/${TASK_SLUG}"
 # tmux session names can't contain dots or colons
 SESSION_NAME="${SESSION_NAME//[.:]/-}"
 
@@ -119,20 +119,16 @@ if [ -z "${RALPH_MONITORED:-}" ]; then
   fi
 
   # Launch this script inside a new tmux session
-  tmux new-session -d -s "$SESSION_NAME" -c "$SCRIPT_DIR" \
+  tmux new-session -d -s "$SESSION_NAME" -c "$PROJECT_ROOT" \
     "env RALPH_MONITORED=1 RALPH_PROVIDER_BIN='$PROVIDER_BIN' bash '$SCRIPT_PATH' --task '$TASK_BASENAME' --provider '$PROVIDER' $MAX_ITERATIONS"
 
   if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
     echo "Error: Failed to create tmux session"; exit 1
   fi
 
-  # Capture all output to log file
-  tmux pipe-pane -t "$SESSION_NAME" -o "cat >> '$OUTPUT_LOG'"
-
   echo "========================================"
   echo "Ralph+ Monitored Mode"
   echo "Session:  $SESSION_NAME"
-  echo "Output:   $OUTPUT_LOG"
   echo ""
   echo "Attaching to session..."
   echo "Detach with: Ctrl-b d"
@@ -238,49 +234,80 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
   ) &
   INJECTOR_PID=$!
 
-  # Background watcher: polls activity log for ITERATION signals.
-  # Sends /exit when detected. Times out after 45 minutes for retry.
-  WATCHER_RESULT=$(mktemp)
+  # Poll activity log for ITERATION signals, then kill the provider process.
+  # The AI logs the signal when it's done - no need to inject /exit.
   SIGNAL_PATTERN="\[$i/$MAX_ITERATIONS\] .*orchestrator: ITERATION_(DONE|FAIL|BLOCKED)"
-  (
-    TIMEOUT=2700  # 45 minutes
-    ELAPSED=0
+  TIMEOUT=2700  # 45 minutes
+  RESULT="TIMEOUT"
 
-    sleep 60  # minimum processing time before polling
+  if [ "$PROVIDER" = "claude" ]; then
+    # Claude: runs fine backgrounded (opens /dev/tty internally)
+    "$PROVIDER_BIN" --dangerously-skip-permissions &
+    PROVIDER_PID=$!
+
+    ELAPSED=0
+    sleep 60
     ELAPSED=60
 
     while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
+      if ! kill -0 "$PROVIDER_PID" 2>/dev/null; then
+        RESULT="EXITED"; break
+      fi
       sleep 10
       ELAPSED=$((ELAPSED + 10))
       if grep -qE "$SIGNAL_PATTERN" "$ACTIVITY_LOG" 2>/dev/null; then
-        SIGNAL=$(grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" "$ACTIVITY_LOG" | head -1)
-        sleep 15  # let provider finish final output
-        tmux send-keys -t "$SESSION_NAME" "/exit" Enter
-        echo "$SIGNAL" > "$WATCHER_RESULT"
-        exit 0
+        RESULT=$(grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" "$ACTIVITY_LOG" | head -1)
+        sleep 15
+        kill "$PROVIDER_PID" 2>/dev/null || true
+        break
       fi
     done
 
-    # Timeout: force exit for retry
-    tmux send-keys -t "$SESSION_NAME" "/exit" Enter
-    echo "TIMEOUT" > "$WATCHER_RESULT"
-  ) &
-  WATCHER_PID=$!
+    if [ "$RESULT" = "TIMEOUT" ]; then
+      kill "$PROVIDER_PID" 2>/dev/null || true
+    fi
+    wait "$PROVIDER_PID" 2>/dev/null || true
 
-  # Run provider interactively - full TUI visible in tmux
-  if [ "$PROVIDER" = "claude" ]; then
-    "$PROVIDER_BIN" --dangerously-skip-permissions || true
   else
-    "$PROVIDER_BIN" --full-auto --no-alt-screen || true
+    # Codex: needs foreground terminal access, so poll in background instead
+    RESULT_FILE=$(mktemp)
+    PID_FILE=$(mktemp)
+    echo "TIMEOUT" > "$RESULT_FILE"
+
+    (
+      sleep 60
+      ELAPSED=60
+      while [ "$ELAPSED" -lt "$TIMEOUT" ]; do
+        CPID=$(cat "$PID_FILE" 2>/dev/null)
+        if [ -n "$CPID" ] && ! kill -0 "$CPID" 2>/dev/null; then
+          echo "EXITED" > "$RESULT_FILE"; exit 0
+        fi
+        sleep 10
+        ELAPSED=$((ELAPSED + 10))
+        if grep -qE "$SIGNAL_PATTERN" "$ACTIVITY_LOG" 2>/dev/null; then
+          grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" "$ACTIVITY_LOG" | head -1 > "$RESULT_FILE"
+          sleep 15
+          CPID=$(cat "$PID_FILE" 2>/dev/null)
+          [ -n "$CPID" ] && kill "$CPID" 2>/dev/null || true
+          exit 0
+        fi
+      done
+      CPID=$(cat "$PID_FILE" 2>/dev/null)
+      [ -n "$CPID" ] && kill "$CPID" 2>/dev/null || true
+    ) &
+    POLLER_PID=$!
+
+    # Run codex in foreground - gets the terminal, tmux paste works
+    (echo $BASHPID > "$PID_FILE"; exec "$PROVIDER_BIN" --dangerously-bypass-approvals-and-sandbox --no-alt-screen)
+
+    kill "$POLLER_PID" 2>/dev/null || true
+    wait "$POLLER_PID" 2>/dev/null || true
+    RESULT=$(cat "$RESULT_FILE")
+    rm -f "$RESULT_FILE" "$PID_FILE"
   fi
 
   kill $INJECTOR_PID 2>/dev/null || true
-  kill $WATCHER_PID 2>/dev/null || true
   rm -f "$PROMPT_FILE" 2>/dev/null || true
-
-  # Check watcher result
-  RESULT=$(cat "$WATCHER_RESULT" 2>/dev/null || echo "UNKNOWN")
-  rm -f "$WATCHER_RESULT"
 
   if [ "$RESULT" = "TIMEOUT" ]; then
     prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS TIMEOUT - retrying"
