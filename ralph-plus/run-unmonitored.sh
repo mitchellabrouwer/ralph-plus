@@ -146,6 +146,18 @@ if [ ${#MISSING_OPTIONAL[@]} -gt 0 ]; then
     echo ""
 fi
 
+# Check if all stories pass in task file
+all_stories_pass() {
+  [ ! -f "$TASK_FILE" ] && return 0
+  python3 -c "
+import json, sys
+with open('$TASK_FILE') as f:
+  task = json.load(f)
+stories = task.get('userStories', task.get('stories', []))
+sys.exit(0 if stories and all(s.get('passes', False) for s in stories) else 1)
+" 2>/dev/null
+}
+
 echo "Starting Ralph+ - Task: $TASK_BASENAME - Provider: $PROVIDER - Max iterations: $MAX_ITERATIONS"
 
 for i in $(seq 1 "$MAX_ITERATIONS"); do
@@ -153,18 +165,47 @@ for i in $(seq 1 "$MAX_ITERATIONS"); do
   echo "==============================================================="
   echo "  Ralph+ Iteration $i of $MAX_ITERATIONS"
   echo "==============================================================="
+  printf '\033]2;Ralph+ %d/%d\007' "$i" "$MAX_ITERATIONS"
 
   echo "$i/$MAX_ITERATIONS" > "$CURRENT_ITERATION_FILE"
   prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS started"
 
+  ITER_START=$(date +%s)
+  ITER_MARKER="pipeline: iteration $i/$MAX_ITERATIONS started"
+
   if [ "$PROVIDER" = "claude" ]; then
-    OUTPUT=$(claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+    claude --dangerously-skip-permissions --print < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr || true
   else
-    OUTPUT=$(codex exec --full-auto - < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr) || true
+    codex exec --dangerously-bypass-approvals-and-sandbox - < "$SCRIPT_DIR/CLAUDE.md" 2>&1 | tee /dev/stderr || true
   fi
 
-  # Check for completion signal
-  if echo "$OUTPUT" | grep -q "<promise>COMPLETE</promise>"; then
+  ITER_ELAPSED=$(( $(date +%s) - ITER_START ))
+
+  # Extract only log entries from the current iteration (above the "started" marker, which is newest-first)
+  ESCAPED_MARKER=$(echo "$ITER_MARKER" | sed 's/[/&]/\\&/g')
+  ITER_LOG=$(sed "/$ESCAPED_MARKER/q" "$ACTIVITY_LOG" 2>/dev/null || true)
+
+  # Verify the provider actually did work by checking for an ITERATION signal
+  if ! echo "$ITER_LOG" | grep -qE "orchestrator: ITERATION_(DONE|FAIL|BLOCKED)"; then
+    if [ "$ITER_ELAPSED" -lt 60 ]; then
+      prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS NO-OP (${ITER_ELAPSED}s, no signal) - stopping"
+      echo ""
+      echo "Ralph+ stopped: provider exited in ${ITER_ELAPSED}s without completing any work."
+      echo "Check provider output above for errors (rate limit, auth, crash)."
+      exit 1
+    fi
+  fi
+
+  # Check for BLOCKED signal (current iteration only)
+  if echo "$ITER_LOG" | grep -qE "orchestrator: ITERATION_BLOCKED"; then
+    prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: iteration $i/$MAX_ITERATIONS BLOCKED - stopping"
+    echo ""
+    echo "Ralph+ BLOCKED: environment/tooling issue detected. Check activity log for details."
+    exit 1
+  fi
+
+  # Check task JSON directly - source of truth
+  if all_stories_pass; then
     prepend_log "[$(date '+%Y-%m-%d %H:%M:%S')] pipeline: COMPLETE at iteration $i/$MAX_ITERATIONS"
     echo ""
     echo "Ralph+ completed all tasks!"

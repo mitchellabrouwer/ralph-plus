@@ -156,7 +156,8 @@ else
         > "$TEMP_FILE" 2>/dev/null || true
 fi
 
-RESULT_COUNT=$(jq '.results | length' "$TEMP_FILE" 2>/dev/null || echo "0")
+RESULT_COUNT=$(jq -r '.results | length' "$TEMP_FILE" 2>/dev/null || echo "0")
+RESULT_COUNT=${RESULT_COUNT:-0}
 
 echo -e "${BOLD}Security issues found:${NC}"
 echo -e "${DIM}────────────────────────────────────────────────────────────${NC}"
@@ -199,9 +200,12 @@ fi
 echo -e "${DIM}────────────────────────────────────────────────────────────${NC}"
 echo -e "${BOLD}Summary:${NC}"
 
-HIGH=$(jq '[.results[] | select(.extra.severity == "ERROR" or .extra.severity == "error")] | length' "$TEMP_FILE" 2>/dev/null || echo "0")
-MED=$(jq '[.results[] | select(.extra.severity == "WARNING" or .extra.severity == "warning")] | length' "$TEMP_FILE" 2>/dev/null || echo "0")
-LOW=$(jq '[.results[] | select(.extra.severity != "ERROR" and .extra.severity != "error" and .extra.severity != "WARNING" and .extra.severity != "warning")] | length' "$TEMP_FILE" 2>/dev/null || echo "0")
+HIGH=$(jq -r '[.results[] | select(.extra.severity == "ERROR" or .extra.severity == "error")] | length' "$TEMP_FILE" 2>/dev/null || echo "0")
+HIGH=${HIGH:-0}
+MED=$(jq -r '[.results[] | select(.extra.severity == "WARNING" or .extra.severity == "warning")] | length' "$TEMP_FILE" 2>/dev/null || echo "0")
+MED=${MED:-0}
+LOW=$(jq -r '[.results[] | select(.extra.severity != "ERROR" and .extra.severity != "error" and .extra.severity != "WARNING" and .extra.severity != "warning")] | length' "$TEMP_FILE" 2>/dev/null || echo "0")
+LOW=${LOW:-0}
 
 echo -e "  ${RED}High:${NC} $HIGH  ${YELLOW}Medium:${NC} $MED  ${CYAN}Low:${NC} $LOW  ${DIM}Total: $RESULT_COUNT${NC}"
 echo ""

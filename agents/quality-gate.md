@@ -45,7 +45,7 @@ Run only the checks specified in the quality gates config. Read `docs/architectu
 3. **Format**
 4. **Tests**
 5. **Complexity** - run `ralph-plus/check-complexity.sh --diff` from the project root
-6. **Security** - run `ralph-plus/check-security.sh --diff` from the project root
+6. **Security (diff-only)** - run `ralph-plus/check-security.sh --diff` from the project root
 
 If `docs/architecture.md` does not exist or has no Quality Gates table, discover the commands for checks 1-4 from the project's config files (package.json scripts, Makefile, pyproject.toml, etc.). If a gate is marked "n/a" or no command can be found, skip it.
 
@@ -66,6 +66,11 @@ Do NOT attempt to auto-fix complexity or security findings. These need human jud
 - **HIGH** severity (CCN >= 20, semgrep ERROR) - **fails the quality gate**
 - **MEDIUM** severity - note in output for awareness, does not block
 - **LOW** severity - ignored
+
+For security specifically:
+- Always use `--diff` mode only (feature-isolated scope)
+- **Only HIGH semgrep findings can fail** the gate
+- If security tooling itself fails (script crash/parser issue), report security as **skipped** with warning details and `SECURITY_TOOLING_WARNING` so the orchestrator can decide next action
 
 ## Acceptance Criteria Verification
 
@@ -98,6 +103,7 @@ Report back with:
   - FAIL: one or more checks found code issues
   - BLOCKED: one or more checks could not run due to environment/tooling problems (even if other checks passed)
 - **Per-check results**: pass / fail / skipped / **BLOCKED** with relevant output (typecheck, lint, format, tests, complexity, security)
+- **Security decision signal**: `HIGH_FAIL` | `NON_HIGH_ONLY` | `SECURITY_TOOLING_WARNING`
 - **Complexity/security notes**: any MEDIUM findings for awareness (even if gate passes)
 - **Acceptance criteria**: met/not-met with evidence for each
 - **Failure details**: if anything failed, include the error output and a suggestion for what to fix
@@ -110,6 +116,7 @@ Report back with:
 - Do NOT fix complexity or security findings - report them as-is
 - If a check command or script is not available, mark as skipped (not failed)
 - If a check command exists but the tooling/environment is broken (missing config, missing dependency, parser crash), mark as **BLOCKED** - do NOT attempt to fix via Codex, do NOT loop
+- Exception for security check: if `ralph-plus/check-security.sh --diff` itself errors, mark security as **skipped** with warning details and emit `SECURITY_TOOLING_WARNING` (do not mark overall BLOCKED from security tooling issues)
 - BLOCKED takes priority: if any check is BLOCKED, overall result is BLOCKED regardless of other checks passing
 - Be precise about what failed and where
 - When BLOCKED, state the exact fix needed so a human can resolve it in one action

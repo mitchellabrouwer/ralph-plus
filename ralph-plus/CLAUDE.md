@@ -13,9 +13,9 @@ You coordinate a multi-agent pipeline. One user story per iteration.
 7. Check correct branch (task file `branchName`). Create from main if needed.
 8. Pick highest priority story where `passes: false`
 9. Run the pipeline below
-10. If ALL stories `passes: true`, run the **Archive** step below then reply `<promise>COMPLETE</promise>`
+10. If ALL stories `passes: true`, run the **Archive** step below then stop.
 
-No story with `passes: false`? Run the **Archive** step below then reply `<promise>COMPLETE</promise>` and stop.
+No story with `passes: false`? Run the **Archive** step below then stop.
 
 ## Pipeline
 
@@ -51,7 +51,10 @@ Returns: pass/fail per criterion.
 
 Spawn `quality-gate` with `model: "haiku"`. Pass: story details, quality gates config, what TDD changed, E2E results if applicable.
 
-Runs checks (typecheck, lint, format, tests). Fixes mechanical issues (lint, format, typecheck) via Codex, re-verifies. Reports final pass/fail.
+Runs checks (typecheck, lint, format, tests). Fixes mechanical issues (lint, format, typecheck) via Codex, re-verifies. Reports final pass/fail plus a `Security decision signal`:
+- `HIGH_FAIL`: high-risk semgrep findings exist
+- `NON_HIGH_ONLY`: only medium/low findings or none
+- `SECURITY_TOOLING_WARNING`: security script/tooling issue, no high finding confirmed
 
 ### 5. Committer
 
@@ -73,13 +76,20 @@ If quality-gate reports **BLOCKED**, the environment/tooling is broken and no fu
 
 Log `orchestrator: ITERATION_BLOCKED - <reason from quality-gate>` to the activity log as the very last action, then output a clear message to the user stating exactly what needs to be fixed before the pipeline can resume.
 
+## Security Signal Handling
+
+Use the quality-gate `Security decision signal` to decide handling:
+- `HIGH_FAIL`: treat as quality-gate failure (do not commit)
+- `NON_HIGH_ONLY`: proceed normally based on quality-gate overall result
+- `SECURITY_TOOLING_WARNING`: do not auto-block the pipeline. Log a warning in activity log and continue based on quality-gate overall result.
+
 ## After Committer
 
-Re-read task file. All `passes: true`? Run the **Archive** step then output `<promise>COMPLETE</promise>`. Otherwise log `orchestrator: ITERATION_DONE` to the activity log as the very last action.
+Re-read task file. All `passes: true`? Run the **Archive** step then stop. Otherwise log `orchestrator: ITERATION_DONE` to the activity log as the very last action.
 
 ## Archive
 
-Run this when all stories pass, before outputting `<promise>COMPLETE</promise>`.
+Run this when all stories pass, before stopping.
 
 1. Read the progress file's `## Codebase Patterns` section
 2. Append it to `docs/tasks/LEARNINGS.md` under a heading with the task name and date:
@@ -92,7 +102,7 @@ Run this when all stories pass, before outputting `<promise>COMPLETE</promise>`.
 4. Move this task's specific files into it: `task-<slug>.json`, `prd-<slug>.md`, `progress-<slug>.txt`, `activity-<slug>.log`
 5. Log the archive to the activity log before moving it: `orchestrator: archived task to completed/`
 6. Commit the archive (learnings update + moved files) with message: `chore: archive completed task <slug>`
-7. Log `orchestrator: ITERATION_DONE` to the activity log as the very last action (before outputting `<promise>COMPLETE</promise>`)
+7. Log `orchestrator: ITERATION_DONE` to the activity log as the very last action
 
 ## Activity Log
 
@@ -115,3 +125,4 @@ Events: `orchestrator: picked US-XXX (Title)` | `planner: starting` / `planner: 
 - Never modify code yourself
 - Read Codebase Patterns from both `docs/tasks/LEARNINGS.md` and the current progress log before starting
 - Always log an ITERATION signal (`ITERATION_DONE`, `ITERATION_FAIL`, or `ITERATION_BLOCKED`) as the very last action of every iteration
+- Dirty working tree is expected. A previous iteration or agent may have been cut off mid-work, leaving uncommitted or modified files. Do NOT stop, ask, or stash. Pick up where they left off and continue from the current state.
