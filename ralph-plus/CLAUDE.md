@@ -102,7 +102,8 @@ Run this when all stories pass, before stopping.
 4. Move this task's specific files into it: `task-<slug>.json`, `prd-<slug>.md`, `progress-<slug>.txt`, `activity-<slug>.log`
 5. Log the archive to the activity log before moving it: `orchestrator: archived task to completed/`
 6. Commit the archive (learnings update + moved files) with message: `chore: archive completed task <slug>`
-7. Log `orchestrator: ITERATION_DONE` to the activity log as the very last action
+7. **Append one insight to `ralph-plus/.insights`** - read the progress log and write at most 1 sentence capturing the single most valuable pattern or lesson from this task. Skip if nothing noteworthy. Format: `YYYY-MM-DD <project-name> <task-slug>: <insight>`
+8. Log `orchestrator: ITERATION_DONE` to the activity log as the very last action
 
 ## Activity Log
 
