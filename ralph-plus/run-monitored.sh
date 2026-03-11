@@ -166,6 +166,13 @@ prepend_log() {
   fi
 }
 
+current_iteration_log() {
+  local marker escaped_marker
+  marker="pipeline: iteration $i/$MAX_ITERATIONS started"
+  escaped_marker=$(printf '%s\n' "$marker" | sed 's/[][\/.^$*]/\\&/g')
+  sed "/$escaped_marker/q" "$ACTIVITY_LOG" 2>/dev/null || true
+}
+
 # Initialize progress file if missing
 if [ ! -f "$PROGRESS_FILE" ]; then
   echo "# Ralph+ Progress Log" > "$PROGRESS_FILE"
@@ -255,8 +262,9 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
       fi
       sleep 10
       ELAPSED=$((ELAPSED + 10))
-      if grep -qE "$SIGNAL_PATTERN" "$ACTIVITY_LOG" 2>/dev/null; then
-        RESULT=$(grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" "$ACTIVITY_LOG" | head -1)
+      ITER_LOG=$(current_iteration_log)
+      if printf '%s\n' "$ITER_LOG" | grep -qE "$SIGNAL_PATTERN"; then
+        RESULT=$(printf '%s\n' "$ITER_LOG" | grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" | head -1)
         sleep 15
         kill "$PROVIDER_PID" 2>/dev/null || true
         break
@@ -284,8 +292,9 @@ while [ "$i" -le "$MAX_ITERATIONS" ]; do
         fi
         sleep 10
         ELAPSED=$((ELAPSED + 10))
-        if grep -qE "$SIGNAL_PATTERN" "$ACTIVITY_LOG" 2>/dev/null; then
-          grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" "$ACTIVITY_LOG" | head -1 > "$RESULT_FILE"
+        ITER_LOG=$(current_iteration_log)
+        if printf '%s\n' "$ITER_LOG" | grep -qE "$SIGNAL_PATTERN"; then
+          printf '%s\n' "$ITER_LOG" | grep -oE "ITERATION_(DONE|FAIL|BLOCKED)" | head -1 > "$RESULT_FILE"
           sleep 15
           CPID=$(cat "$PID_FILE" 2>/dev/null)
           [ -n "$CPID" ] && kill "$CPID" 2>/dev/null || true
