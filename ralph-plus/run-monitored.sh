@@ -119,8 +119,9 @@ if [ -z "${RALPH_MONITORED:-}" ]; then
   fi
 
   # Launch this script inside a new tmux session
+  # Shell stays open after pipeline exits so you can inspect output/logs
   tmux new-session -d -s "$SESSION_NAME" -c "$PROJECT_ROOT" \
-    "env RALPH_MONITORED=1 RALPH_PROVIDER_BIN='$PROVIDER_BIN' bash '$SCRIPT_PATH' --task '$TASK_BASENAME' --provider '$PROVIDER' $MAX_ITERATIONS"
+    "env RALPH_MONITORED=1 RALPH_PROVIDER_BIN='$PROVIDER_BIN' bash '$SCRIPT_PATH' --task '$TASK_BASENAME' --provider '$PROVIDER' $MAX_ITERATIONS; echo ''; echo '[ralph+] pipeline exited - session kept open. detach: Ctrl-b d  |  close: exit'; exec bash"
 
   if ! tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
     echo "Error: Failed to create tmux session"; exit 1
